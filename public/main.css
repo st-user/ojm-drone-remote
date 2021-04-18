@@ -1,0 +1,180 @@
+ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+}
+
+#title {
+    font-size: 36px;
+    margin: auto;
+    width: 240px;
+    line-height: 1.5;
+    text-align: center;
+}
+
+#messageArea {
+    margin: auto;
+    margin-bottom: 12px;
+    max-width: 540px;
+}
+
+#startArea {
+    margin: auto;
+    margin-bottom: 12px;
+    max-width: 540px;
+}
+
+.startControl {
+    overflow: hidden;
+}
+
+.startControl > li {
+    float: left;
+    margin-right: 12px;
+}
+
+.startControl button {
+    width: 60px;
+}
+
+input[name="startKey"] {
+    width: 240px;
+}
+
+#appArea {
+    width: 100%;
+}
+
+#droneVideoEmpty {
+    margin: auto;
+    margin-bottom: 24px;
+    max-width: 540px;
+}
+
+#droneVideoArea {
+    margin: auto;
+    margin-bottom: 24px;
+}
+
+#droneControlArea {
+    margin: auto;
+    max-width: 540px;
+}
+
+#droneControlArea.enabled .move1,
+#droneControlArea.enabled .move2,
+#droneControlArea.enabled .move2-r
+{
+    cursor: pointer;
+}
+
+#droneControlArea.disabled .move1,
+#droneControlArea.disabled .move2,
+#droneControlArea.disabled .move2-r
+{
+    cursor: default;
+}
+
+
+.control {
+    overflow: hidden;
+}
+
+.moveContainer {
+    position: relative;
+    width: 108px;
+    height: 108px;
+    margin-right: 32px;
+}
+
+.move1Container {
+    float: left;
+}
+
+.move2Container {
+    float: right;
+}
+
+.move1 {
+    position: absolute;
+    width: 32px;   
+    height: 32px;
+    border: 1px solid #353333;
+    border-radius: 4px;
+    text-align: center;
+    line-height: 32px;
+}
+
+#moveForward, #moveUp {
+    top: 0px;
+    left: 36px;
+}
+
+#moveRight, #turnRight {
+    top: 36px;
+    right: 0px;
+}
+
+#moveBackward, #moveDown {
+    top: 72px;
+    left: 36px;
+}
+
+#moveLeft, #turnLeft {
+    top: 36px;
+    left: 0px;
+}
+
+.move2Container {
+    position: relative;
+    width: 108px;
+    height: 108px;
+}
+
+.move2 {
+    position: absolute;
+    width: 32px;   
+    height: 32px;
+    border: 1px solid #353333;
+    border-radius: 4px;
+    text-align: center;
+    line-height: 32px;
+    writing-mode: vertical-rl;
+}
+
+.move2-r {
+    position: absolute;
+    width: 32px;   
+    height: 32px;
+    border: 1px solid #353333;
+    border-radius: 4px;
+}
+
+.move2-r span {
+    margin: auto;
+    display: block;
+    width: 24px;   
+    height: 24px;
+    background-image: url('/rotate.png');
+    background-repeat: no-repeat;
+    background-size: 24px 24px;
+    margin: 4px 4px;
+}
+
+#moveUp {
+    text-orientation: sideways;
+}
+
+#turnLeft {
+    transform: scale(-1, 1);
+}
+
+.clear {
+    clear: both;
+}
