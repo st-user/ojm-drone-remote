@@ -5,6 +5,8 @@ const { verify, generateTurnCredentials } = require('./tools/token.js');
 require('dotenv').config();
 
 
+console.log(`Environment: ${process.env.NODE_ENV}`);
+
 const PORT = process.env.PORT;
 const TOKEN_HASH = process.env.TOKEN_HASH;
 const STUN_URL = process.env.STUN_URL;
