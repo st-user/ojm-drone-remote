@@ -7,51 +7,54 @@
     <body>
 
 
-        <h1 id="title">ojm-drone</h1>
-
-
-        <div id="messageArea"></div>
-
 
         <div id="startArea">
+            <div id="title">OJM-Drone</div>
             <ul class="startControl">
-                <li>KEY:<input type="text" name="startKey" id="startKey" value=""/></li>
-                <li><button type="button" id="start">START</button></li>
+                <li><input type="text" name="startKey" id="startKey" value="" placeholder="Please input 'Start Code' here."/></li>
+                <li><div type="button" id="start">START</div></li>
             </ul>
         </div>
 
 
         <div id="appArea">
+            <div id="messageArea">
+                <div id="messageContent"></div>
+            </div>
+
             <div id="droneVideoEmpty">
                 Now loading Video...
             </div>
             <div id="droneVideoArea">
                 <video id="video" autoplay="true" playsinline="true"></video>
-            </div>
-            <div id="droneControlArea">
 
-                <div class="control">
-       
-                    <div class="moveContainer move1Container">
-                        <div id="moveForward" class="move1">↑</div>
-                        <div id="moveRight" class="move1">→</div>
-                        <div id="moveBackward" class="move1">↓</div>
-                        <div id="moveLeft" class="move1">←</div>
-                    </div>
+                <div id="droneControlArea">
 
-                    <div class="moveContainer move2Container">
-                        <div id="moveUp" class="move2"><span>&lt;&lt;</span></div>
-                        <div id="turnRight" class="move2-r"><span></span></div>
-                        <div id="moveDown" class="move2">&gt;&gt;</div>
-                        <div id="turnLeft" class="move2-r"><span></span></div>
-                    </div>
-
-                    <div class="clear"></div>
-                </div>
-            </div>
-        </div>      
-
+                    <div class="control">
+           
+                        <div class="moveContainer move1Container">
+                            <div id="moveForward" class="move1">↑</div>
+                            <div id="moveRight" class="move1">→</div>
+                            <div id="moveBackward" class="move1">↓</div>
+                            <div id="moveLeft" class="move1">←</div>
+                        </div>
         
+                        <div class="moveContainer move2Container">
+                            <div id="moveUp" class="move2"><span>&lt;&lt;</span></div>
+                            <div id="turnRight" class="move2-r"><span></span></div>
+                            <div id="moveDown" class="move2">&gt;&gt;</div>
+                            <div id="turnLeft" class="move2-r"><span></span></div>
+                        </div>
+        
+                        <div class="clear"></div>
+                    </div>
+                </div>
+
+            </div>
+        </div>           
+
+
+
         <script src="main.js"></script>
     </body>
 </html>

@@ -27,6 +27,7 @@ window.addEventListener('DOMContentLoaded', () => {
     const _click = ($elem, handler) => $elem.addEventListener('click', handler);
 
     const $messageArea = _q('#messageArea');
+    const $messageContent = _q('#messageContent');
 
     const $start = _q('#start');
     const $startKey = _q('#startKey');
@@ -50,6 +51,7 @@ window.addEventListener('DOMContentLoaded', () => {
         $startKey.disabled = false;
         $start.disabled = false;
         _none($appArea);
+        enableStartButton();
     }
 
     function ready() {
@@ -65,6 +67,7 @@ window.addEventListener('DOMContentLoaded', () => {
         _block($appArea);
         _block($droneVideoEmpty);
         _none($droneVideoArea);
+        disableStartButton();
         disableControl();
     }
 
@@ -80,6 +83,7 @@ window.addEventListener('DOMContentLoaded', () => {
         _block($appArea);
         _none($droneVideoEmpty);
         _block($droneVideoArea);
+        disableStartButton();
         disableControl();
     }
 
@@ -95,32 +99,55 @@ window.addEventListener('DOMContentLoaded', () => {
         _block($appArea);
         _none($droneVideoEmpty);
         _block($droneVideoArea);
+        disableStartButton();
         enableControl();
     }
 
+    function resetClass($elem, classToAdd, classToRemove) {
+        $elem.classList.remove(classToRemove);
+        $elem.classList.add(classToAdd);        
+    }
+
+    function disableElem($elem) {
+        resetClass($elem, 'disabled', 'enabled');
+    }
+
+    function enableElem($elem) {
+        resetClass($elem, 'enabled', 'disabled');
+    }
+
+    function disableStartButton() {
+        resetClass($start, 'disabled', 'enabled');
+    }
+
+    function enableStartButton() {
+        resetClass($start, 'enabled', 'disabled');
+    }
 
     function disableControl() {
-        $droneControlArea.classList.remove('enabled');
-        $droneControlArea.classList.add('disabled');
+        disableElem($droneControlArea);
     }
 
     function enableControl() {
-        $droneControlArea.classList.add('enabled');
-        $droneControlArea.classList.remove('disabled');
+        enableElem($droneControlArea);
     }
 
+    let messageTimer;
     function showMessage(message, level) {
-        $messageArea.textContent = message;
-        $messageArea.classList.remove('error');
-        $messageArea.classList.remove('normal');
+        _block($messageArea);
+        clearTimeout(messageTimer);
+        $messageContent.textContent = message;
+        $messageContent.classList.remove('error');
+        $messageContent.classList.remove('normal');
 
+        messageTimer = setTimeout(() => _none($messageArea), 10000);
         switch(level) {
         case 'error':
-            $messageArea.classList.add('error');
+            $messageContent.classList.add('error');
             break;
         case 'info':
         default:
-            $messageArea.classList.add('info');
+            $messageContent.classList.add('info');
             return;
         }
     }
@@ -202,13 +229,38 @@ window.addEventListener('DOMContentLoaded', () => {
                 land();
 
                 $video.onloadedmetadata = () => {
-                    console.debug(`$video.videoWidth ${$video.videoWidth}`);
-                    $droneVideoArea.style.width = `${$video.videoWidth}px`;
+                    resizeVideo();
                 };
                 $video.srcObject = event.streams[0];
             }          
         });
     
+    }
+
+    function resizeVideo() {
+        console.debug(`$video ${$video.videoWidth}/${$video.videoHeight}`);
+        let aspectRatio = $video.videoWidth / $video.videoHeight;
+        if ($video.videoHeight === 0) {
+            aspectRatio = 16 / 9;
+        }
+        const width = Math.max(window.innerWidth * 0.98, 480);
+        const height = width / aspectRatio;
+        let videoAreaHeight = height;
+
+        if (width <= 840) {
+            resetClass($droneControlArea, 'narrow', 'wide');
+            videoAreaHeight += 120;
+        } else {
+            resetClass($droneControlArea, 'wide', 'narrow');
+        }
+        console.debug(`Calculated video width and height: ${width}/${height}`);
+        $droneVideoArea.style.width = `${width}px`;
+        $droneVideoArea.style.height = `${videoAreaHeight}px`;
+        $droneVideoEmpty.style.width = `${width}px`;
+        $droneVideoEmpty.style.height = `${videoAreaHeight}px`;
+        $droneVideoEmpty.style['line-height'] = `${videoAreaHeight}px`;
+        $video.style.width = `${width}px`;
+        $video.style.height = `${height}px`;
     }
 
     function prepareDataChannel() {
@@ -389,7 +441,14 @@ window.addEventListener('DOMContentLoaded', () => {
         checkAndTryTimer = setTimeout(checkAndTry, TRY_INTERVAL_MILLIS);
     }
 
-    _click($start, setUpConnection);
+    _click($start, () => {
+        if (state !== STATE.INIT) {
+            return;
+        }
+        setUpConnection();
+    });
+    window.addEventListener('resize', resizeVideo);
+    _click($messageContent, () => _none($messageArea));
 
     function sendCommand(command) {
         dc.send(JSON.stringify({ command }));
@@ -416,4 +475,5 @@ window.addEventListener('DOMContentLoaded', () => {
 
 
     init();
+    resizeVideo();
 });
