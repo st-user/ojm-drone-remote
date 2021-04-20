@@ -367,14 +367,13 @@ window.addEventListener('DOMContentLoaded', () => {
                 }
                 break;
             case 'answer':
-                const answer = dataJson.answer;
-                console.debug(`answer`, answer);
-                pc.setRemoteDescription(answer);
+                console.debug('answer', dataJson.answer);
+                pc.setRemoteDescription(dataJson.answer);
                 break;
             default:
                 return;
             }
-        }
+        };
 
         webSocket.onopen = async () => {
             console.debug('open!!');

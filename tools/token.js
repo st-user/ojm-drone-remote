@@ -1,7 +1,7 @@
 const crypto = require('crypto');
 require('dotenv').config();
 
-const isDevelopment = process.env.NODE_ENV === 'development'
+const isDevelopment = process.env.NODE_ENV === 'development';
 const SECRET = isDevelopment ? undefined : process.env.TURN_SECRET;
 const HOURS_TURN_CREDENTIAL_VALID = process.env.HOURS_TURN_CREDENTIAL_VALID;
 
@@ -16,7 +16,7 @@ const createHash = token => {
             if (error) {
                 reject(error);
             } else {
-                resolve(`${salt}:${derivedKey.toString('hex')}`)
+                resolve(`${salt}:${derivedKey.toString('hex')}`);
             }
         });
 

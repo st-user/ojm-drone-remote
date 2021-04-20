@@ -65,7 +65,7 @@ signalingServer.on('connection', (ws, request) => {
 
     if (!startKeyLocalClientMap.has(startKey)) {
         console.log(`Invalid startKey: ${startKey}`);
-        ws.close()
+        ws.close();
         return;
     }
 
@@ -81,7 +81,7 @@ signalingServer.on('connection', (ws, request) => {
         const remoteClient = startKeyRemoteClientMap.get(startKey);
 
         if (!remoteClient || remoteClient.readyState !== WebSocket.OPEN) {
-            console.log(`Remote client is not opened.`);
+            console.log('Remote client is not opened.');
             return;
         }
 
@@ -125,7 +125,7 @@ remoteServer.on('connection', (ws, request) => {
 
     if (!startKeyLocalClientMap.has(startKey)) {
         console.log(`Invalid startKey: ${startKey}`);
-        ws.close()
+        ws.close();
         return;
     }
 
@@ -141,7 +141,7 @@ remoteServer.on('connection', (ws, request) => {
         const localClient = startKeyLocalClientMap.get(startKey);
 
         if (!localClient || localClient.readyState !== WebSocket.OPEN) {
-            console.log(`Local client is not opened.`);
+            console.log('Local client is not opened.');
             return;
         }
 
