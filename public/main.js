@@ -194,18 +194,35 @@ window.addEventListener('DOMContentLoaded', () => {
         if (iceServerInfo) {
             config.iceServers = [
                 {
-                    url: iceServerInfo.stun
+                    urls: iceServerInfo.stun
                 },
                 {
-                    url: iceServerInfo.turn,
+                    urls: iceServerInfo.turn,
                     username: iceServerInfo.credentials.username,
                     credential: iceServerInfo.credentials.password
                 }
             ];
         }
-        console.log(config);
-    
-        pc = new RTCPeerConnection(config);
+        
+        try {
+            pc = new RTCPeerConnection(config);
+        } catch(e) {
+            console.error('Try using RTCIceServer.url.', e);
+            if (iceServerInfo) {
+                config.iceServers = [
+                    {
+                        url: iceServerInfo.stun
+                    },
+                    {
+                        url: iceServerInfo.turn,
+                        username: iceServerInfo.credentials.username,
+                        credential: iceServerInfo.credentials.password
+                    }
+                ];
+                pc = new RTCPeerConnection(config);
+            }
+        }
+        console.debug(config);
     
         pc.addEventListener('connectionstatechange', () => {
             console.debug(`connectionstatechange: ${pc.iceGatheringState}`);
@@ -312,7 +329,10 @@ window.addEventListener('DOMContentLoaded', () => {
                 }
             });
         };
-        const offer = await pc.createOffer({offerToReceiveVideo : true, offerToReceiveAudio: true});
+
+        const transceiver = pc.addTransceiver('video');
+        transceiver.direction = 'recvonly';
+        const offer = await pc.createOffer();
         await pc.setLocalDescription(offer);
         await gather();
         const offerLocalDesc = pc.localDescription;
