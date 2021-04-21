@@ -7,43 +7,45 @@
     <body>
 
 
-
-        <div id="startArea">
-            <div id="title">OJM-Drone</div>
-            <ul class="startControl">
-                <li><input type="text" name="startKey" id="startKey" value="" placeholder="Please input 'Start Code' here."/></li>
-                <li><div type="button" id="start">START</div></li>
-            </ul>
+        <div class="start-area">
+            <div class="title">OJM-Drone</div>
+            <div class="start-control-wrapper">
+                <ul class="start-control">
+                    <li><input type="text" name="startKey" id="startKey" class="start-key" value="" placeholder="Please input 'Start Code' here."/></li>
+                    <li><div id="start" class="start">START</div></li>
+                </ul>
+            </div>
+            <div class="clear"></div>
         </div>
 
 
-        <div id="appArea">
-            <div id="messageArea">
-                <div id="messageContent"></div>
+        <div id="appArea" class="app-area">
+            <div id="messageArea" class="message-area">
+                <div id="messageContent" class="message-content"></div>
             </div>
 
-            <div id="droneVideoEmpty">
+            <div id="droneVideoEmpty" class="drone-video-empty">
                 Now loading Video...
             </div>
-            <div id="droneVideoArea">
+            <div id="droneVideoArea" class="drone-video-area">
                 <video id="video" autoplay="true" playsinline="true"></video>
 
-                <div id="droneControlArea">
+                <div id="droneControlArea" class="drone-control-area">
 
                     <div class="control">
            
-                        <div class="moveContainer move1Container">
-                            <div id="moveForward" class="move1">↑</div>
-                            <div id="moveRight" class="move1">→</div>
-                            <div id="moveBackward" class="move1">↓</div>
-                            <div id="moveLeft" class="move1">←</div>
+                        <div class="move-container move1-container">
+                            <div id="moveForward" class="move1 move-top">↑</div>
+                            <div id="moveRight" class="move1 move-right">→</div>
+                            <div id="moveBackward" class="move1 move-bottom">↓</div>
+                            <div id="moveLeft" class="move1 move-left">←</div>
                         </div>
         
-                        <div class="moveContainer move2Container">
-                            <div id="moveUp" class="move2"><span>&lt;&lt;</span></div>
-                            <div id="turnRight" class="move2-r"><span></span></div>
-                            <div id="moveDown" class="move2">&gt;&gt;</div>
-                            <div id="turnLeft" class="move2-r"><span></span></div>
+                        <div class="move-container move2-container">
+                            <div id="moveUp" class="move2 move-top"><span>&lt;&lt;</span></div>
+                            <div id="turnRight" class="move2-r move-right"><span></span></div>
+                            <div id="moveDown" class="move2 move-bottom">&gt;&gt;</div>
+                            <div id="turnLeft" class="move2-r move-left"><span></span></div>
                         </div>
         
                         <div class="clear"></div>
@@ -52,7 +54,6 @@
 
             </div>
         </div>           
-
 
 
         <script src="main.js"></script>

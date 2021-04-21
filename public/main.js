@@ -20,19 +20,19 @@ window.addEventListener('DOMContentLoaded', () => {
     const TRY_CONNECTING_COUNT = 3;
     const TRY_INTERVAL_MILLIS = 1000;
     let checkAndTryTimer;
+    let messageTimer;
 
     const _q = selector => document.querySelector(selector);
     const _none = $elem => $elem.style.display = 'none';
     const _block = $elem => $elem.style.display = 'block';
     const _click = ($elem, handler) => $elem.addEventListener('click', handler);
 
-    const $messageArea = _q('#messageArea');
-    const $messageContent = _q('#messageContent');
-
     const $start = _q('#start');
     const $startKey = _q('#startKey');
 
     const $appArea = _q('#appArea');
+    const $messageArea = _q('#messageArea');
+    const $messageContent = _q('#messageContent');
     const $droneVideoEmpty = _q('#droneVideoEmpty');
     const $droneVideoArea = _q('#droneVideoArea');
     const $video = _q('#video');
@@ -132,7 +132,6 @@ window.addEventListener('DOMContentLoaded', () => {
         enableElem($droneControlArea);
     }
 
-    let messageTimer;
     function showMessage(message, level) {
         _block($messageArea);
         clearTimeout(messageTimer);
@@ -186,7 +185,7 @@ window.addEventListener('DOMContentLoaded', () => {
     }
 
     function createPeerConnection() {
-        console.log(iceServerInfo);
+        console.debug(iceServerInfo);
 
         const config = {
             sdpSemantics: 'unified-plan'
