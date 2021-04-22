@@ -183,6 +183,13 @@ httpServer.on('upgrade', (request, socket, head) => {
 
     const url = new URL( request.url, 'http://localhost');
     const pathname = url.pathname;
+    const startKey = url.searchParams.get('startKey');
+
+    if(!startKeyLocalClientMap.has(startKey)) {
+        socket.write('HTTP/1.1 401 Unauthorized\r\n\r\n');
+        socket.destroy();
+        return;
+    }
 
     if (pathname === '/signaling') {
 

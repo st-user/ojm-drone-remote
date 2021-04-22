@@ -394,12 +394,22 @@ window.addEventListener('DOMContentLoaded', () => {
             }
         };
 
+        let onerror;
+        webSocket.onerror = () => {
+            alert('Failed to start connecting to the remote peer. The input code may be invalid.');
+            onerror = true;
+            init();
+            webSocket.close();
+        };
+
         webSocket.onopen = async () => {
             console.debug('open!!');
         };
 
         webSocket.onclose = () => {
-            showMessage('Failed to open connection or connection was closed. Please retry.');
+            if (!onerror) {
+                alert('Failed to open connection or connection was closed. Please retry.');
+            }
             init();
         };
 
