@@ -122,7 +122,17 @@ You should see a web page like:
 
 Open the terminal different from the one that you run `node app.js` above, move to the project's root directory and run:
 
+#### macOS
+
 ```
+source ./venv/bin/activate
+python run.py
+```
+
+#### Windows 10
+
+```
+.\venv\Scripts\activate.bat
 python run.py
 ```
 
