@@ -180,7 +180,7 @@ You should see a web page like:
 
 **NOTE**:
 
-If you don't get any error but can't see the video, please check your PC's firewall settings, it could be preventing the WebRTC connection.
+If you don't get any error but can't see the video, please check your PC's firewall settings. It could be preventing the WebRTC connection.
 
 
 # Using Docker
