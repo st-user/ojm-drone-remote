@@ -91,7 +91,7 @@ copy template.env .env
 
 For simplicity, the guides below show the way that you run the applications on a single PC.
 If you want to deploy the applications separately, for example you want to run 'ojm-drone-remote' on a server installed in another PC (not localhost), you need to change some environment variables in `.env` files
-(at least, 'SIGNALING_ENDPOINT' in `.env` of 'ojm-drone-local').
+(at least, `SIGNALING_ENDPOINT` in `.env` of 'ojm-drone-local').
 
 For more infromation, please see the documentations on each variable in `.env` files.
 
@@ -118,7 +118,7 @@ You should see a web page like:
 
 ### ojm-drone-local
 
-**NOTE**: If you set the environment variable 'USE_DRONE' to 'True' in `.env` of 'ojm-drone-local', make sure that your PC on which 'ojm-drone-local' app runs successfully connects to Tello EDU by Wi-Fi.
+**NOTE**: If you set the environment variable `USE_DRONE` to `True` in `.env` of 'ojm-drone-local', make sure that your PC on which 'ojm-drone-local' app runs successfully connects to Tello EDU by Wi-Fi.
 
 Open the terminal different from the one that you run `node app.js` above, move to the project's root directory and run:
 
@@ -151,9 +151,9 @@ You should see a web page like:
 
    **NOTE**:
 
-   When the environment variable 'USE_DRONE' is 'False', you should see the test movie like the image above.
+   When the environment variable `USE_DRONE` is `False`, you should see the test movie like the image above.
    
-   On the other hand, when the enviroment variable 'USE_DRONE' is 'True', you should see the video that Tello EDU caputures by its webcam.
+   On the other hand, when the enviroment variable `USE_DRONE` is `True`, you should see the video that Tello EDU caputures by its webcam.
 
 
 
@@ -164,8 +164,8 @@ You should see a web page like:
 
    **NOTE**:
 
-   When the environment variable 'USE_DRONE' is 'False', the bottom buttons become clickable but nothing happends in addition.
-   On the other hand, when the enviroment variable 'USE_DRONE' is 'True', the bottom buttons become clickable and Tello EDU takes off!
+   When the environment variable `USE_DRONE` is `False`, the bottom buttons become clickable but nothing happends in addition.
+   On the other hand, when the enviroment variable `USE_DRONE` is `True`, the bottom buttons become clickable and Tello EDU takes off!
 
 
 # Using Docker
