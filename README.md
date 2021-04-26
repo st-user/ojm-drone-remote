@@ -118,9 +118,7 @@ You should see a web page like:
 
 ### ojm-drone-local
 
-**NOTE**:
-
-If you set the environment variable 'USE_DRONE' to 'True' in `.env` of 'ojm-drone-local', make sure that your PC on which 'ojm-drone-local' app runs successfully connects to Tello EDU by Wi-Fi.
+**NOTE**: If you set the environment variable 'USE_DRONE' to 'True' in `.env` of 'ojm-drone-local', make sure that your PC on which 'ojm-drone-local' app runs successfully connects to Tello EDU by Wi-Fi.
 
 Open the terminal different from the one that you run `node app.js` above, move to the project's root directory and run:
 
@@ -167,14 +165,14 @@ You should see a web page like:
    **NOTE**:
 
    When the environment variable 'USE_DRONE' is 'False', the bottom buttons become clickable but nothing happends in addition.
-   On the other hand, when the enviroment variable 'USE_DRONE' is 'True', the bottom buttons become clicable and Tello EDU takes off!
+   On the other hand, when the enviroment variable 'USE_DRONE' is 'True', the bottom buttons become clickable and Tello EDU takes off!
 
 
 # Using Docker
 
 In order to run 'ojm-drone-remote' on docker container easily, the repository contains Dockerfile.
 
-Especially you can deploy it to Google Colud's [Cloud Run](https://cloud.google.com/run/) out of the box.
+Especially you can deploy it to Google Cloud's [Cloud Run](https://cloud.google.com/run/) out of the box.
 
 Example:
 
