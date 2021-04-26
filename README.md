@@ -178,6 +178,11 @@ You should see a web page like:
    On the other hand, when the enviroment variable `USE_DRONE` is `True`, the bottom buttons become clickable and Tello EDU takes off!
 
 
+**NOTE**:
+
+If you don't get any error but can't see the video, please check your PC's firewall settings, it could be preventing the WebRTC connection.
+
+
 # Using Docker
 
 In order to run 'ojm-drone-remote' on docker container easily, the repository contains Dockerfile.
@@ -196,7 +201,7 @@ For more information, please see [Build and deploy a Node.js service](https://cl
 
 # Using coturn (TURN Server)
 
-When you want the applications communicate with each other by WebRTC over the internet, usually you have to use TURN server.
+When you want the applications to communicate with each other by WebRTC over the internet, usually you have to use TURN server.
 I recommend using open source TURN Server [coturn](https://github.com/coturn/coturn) for this purpose.
 
 In order to use [coturn](https://github.com/coturn/coturn), you need to set the environment variables in `.env` file of 'ojm-drone-remote' properly.
