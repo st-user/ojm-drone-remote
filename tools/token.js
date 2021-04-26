@@ -31,6 +31,13 @@ const generateToken = async () => {
     return { token, hash };
 };
 
+const generateTokenByToken = async token => {
+
+    const hash = await createHash(token);
+
+    return { token, hash };
+};
+
 const verify = (inputToken, hash) => {
 
     return new Promise((resolve, reject) => {
@@ -73,5 +80,9 @@ const generateTurnCredentials = name => {
 };
 
 module.exports = {
-    createHash, generateToken, verify, generateTurnCredentials
+    createHash,
+    generateToken,
+    generateTokenByToken,
+    verify,
+    generateTurnCredentials
 };
