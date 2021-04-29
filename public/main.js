@@ -433,7 +433,8 @@ window.addEventListener('DOMContentLoaded', () => {
 
         const isNewOrConnectiong = pc.connectionState === 'new' || pc.connectionState === 'connecting';
         if (isNewOrConnectiong) {
-            showMessage(`Waiting for a while until the connection is established. (${newOrConnectingCount}/${TRY_CONNECTING_COUNT})`);
+            const tail = ' .'.repeat(newOrConnectingCount + 1);
+            showMessage(`Waiting for a while until the connection is established${tail}`);
             newOrConnectingCount++;
         } else {
             newOrConnectingCount = 0;
