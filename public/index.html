@@ -6,7 +6,6 @@
     </head>
     <body>
 
-
         <div class="start-area">
             <div class="title">OJM-Drone</div>
             <div class="start-control-wrapper">
@@ -18,44 +17,31 @@
             <div class="clear"></div>
         </div>
 
-
-        <div id="appArea" class="app-area">
+        <section id="mainSection" class="main-section">
             <div id="messageArea" class="message-area">
                 <div id="messageContent" class="message-content"></div>
             </div>
-
-            <div id="droneVideoEmpty" class="drone-video-empty">
-                Now loading Video...
+    
+            <div id="videoEmpty" class="video-empty">
+                <p>No Video</p>
             </div>
-            <div id="droneVideoArea" class="drone-video-area">
+            <div id="videoContainer" class="video-container">
                 <video id="video" autoplay="true" playsinline="true"></video>
+            </div>
 
-                <div id="droneControlArea" class="drone-control-area">
-
-                    <div class="control">
-           
-                        <div class="move-container move1-container">
-                            <div id="moveForward" class="move1 move-top">↑</div>
-                            <div id="moveRight" class="move1 move-right">→</div>
-                            <div id="moveBackward" class="move1 move-bottom">↓</div>
-                            <div id="moveLeft" class="move1 move-left">←</div>
-                        </div>
-        
-                        <div class="move-container move2-container">
-                            <div id="moveUp" class="move2 move-top"><span>&lt;&lt;</span></div>
-                            <div id="turnRight" class="move2-r move-right"><span></span></div>
-                            <div id="moveDown" class="move2 move-bottom">&gt;&gt;</div>
-                            <div id="turnLeft" class="move2-r move-left"><span></span></div>
-                        </div>
-        
-                        <div class="clear"></div>
+            <div class="joystick-area">
+                <div class="joysticks">
+                    <div class="container">
+                        <canvas id="zrCanvas" class="joystick-ui" ></canvas>
+                    </div>
+                    <div class="container">
+                        <canvas id="xyCanvas" class="joystick-ui"></canvas>
                     </div>
                 </div>
-
             </div>
-        </div>           
+        </section>
 
-
+        <script src="joystick.js"></script>
         <script src="main.js"></script>
     </body>
 </html>

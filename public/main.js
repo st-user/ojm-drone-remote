@@ -1,3 +1,5 @@
+/* global ZrJoyStickUI, XyJoyStickUI */
+
 window.addEventListener('DOMContentLoaded', () => {
 
 
@@ -22,21 +24,78 @@ window.addEventListener('DOMContentLoaded', () => {
     let checkAndTryTimer;
     let messageTimer;
 
+    let xyCoordToSend = undefined;
+    let zrCoordToSend = undefined;
+
     const _q = selector => document.querySelector(selector);
     const _none = $elem => $elem.style.display = 'none';
     const _block = $elem => $elem.style.display = 'block';
     const _click = ($elem, handler) => $elem.addEventListener('click', handler);
 
+    /* start area */
     const $start = _q('#start');
     const $startKey = _q('#startKey');
 
-    const $appArea = _q('#appArea');
+    /* main section */
     const $messageArea = _q('#messageArea');
     const $messageContent = _q('#messageContent');
-    const $droneVideoEmpty = _q('#droneVideoEmpty');
-    const $droneVideoArea = _q('#droneVideoArea');
+    const $mainSection = _q('#mainSection');
+    const $videoEmpty = _q('#videoEmpty');
     const $video = _q('#video');
-    const $droneControlArea = _q('#droneControlArea');
+
+
+    /* JoyStick */
+    const zrJoyStickUI = new ZrJoyStickUI({
+        selector: '#zrCanvas',
+        radius: 100
+    });
+    zrJoyStickUI.onmove(data => {
+        const coords = data.coords;
+        zrCoordToSend = {
+            z: coords.inUI.y / zrJoyStickUI.radius,
+            r: coords.inUI.x / zrJoyStickUI.radius
+        };
+    });
+    zrJoyStickUI.onend(() => {
+        zrCoordToSend = undefined;
+        sendJoystickZr({ z: 0, r: 0 });
+    });
+    zrJoyStickUI.drawBase(false);
+    
+    const xyJoyStickUI = new XyJoyStickUI({
+        selector: '#xyCanvas',
+        radius: 100
+    });
+    xyJoyStickUI.onmove(data => {
+        const coords = data.coords;
+        xyCoordToSend = {
+            x: coords.inUI.x / xyJoyStickUI.radius,
+            y: coords.inUI.y / xyJoyStickUI.radius
+        }; 
+    });
+    xyJoyStickUI.onend(() => {
+        xyCoordToSend = undefined;
+        sendJoystickXy({ x: 0, y: 0 });
+    });
+    xyJoyStickUI.drawBase(false);
+
+
+    _click($start, () => {
+        if (state !== STATE.INIT) {
+            return;
+        }
+        setUpConnection();
+    });
+    window.addEventListener('resize', resizeVideo);
+    _click($messageContent, () => _none($messageArea));
+
+    init();
+    resizeVideo();
+
+    setTimeout(doSendJoystickXy, 100);
+    setTimeout(doSendJoystickZr, 100);
+
+
 
 
     function init() {
@@ -50,7 +109,8 @@ window.addEventListener('DOMContentLoaded', () => {
         showMessage('Please input a key and click the start button.');
         $startKey.disabled = false;
         $start.disabled = false;
-        _none($appArea);
+        _block($videoEmpty);
+        _none($video);
         enableStartButton();
     }
 
@@ -64,11 +124,9 @@ window.addEventListener('DOMContentLoaded', () => {
         showMessage('Now connecting to the remote peer that controls the drone. Please wait a minute.');
         $startKey.disabled = true;
         $start.disabled = true;
-        _block($appArea);
-        _block($droneVideoEmpty);
-        _none($droneVideoArea);
+        _block($videoEmpty);
+        _none($video);
         disableStartButton();
-        disableControl();
     }
 
     function land() {
@@ -80,11 +138,9 @@ window.addEventListener('DOMContentLoaded', () => {
         showMessage('The connection to the remote peer is established. Please wait until the drone takes off.');
         $startKey.disabled = true;
         $start.disabled = true;
-        _block($appArea);
-        _none($droneVideoEmpty);
-        _block($droneVideoArea);
+        _none($videoEmpty);
+        _block($video);
         disableStartButton();
-        disableControl();
     }
 
     function takeoff() {
@@ -96,24 +152,14 @@ window.addEventListener('DOMContentLoaded', () => {
         showMessage('The drone took off. Now you can control the drone. Enjoy!!');
         $startKey.disabled = true;
         $start.disabled = true;
-        _block($appArea);
-        _none($droneVideoEmpty);
-        _block($droneVideoArea);
+        _none($videoEmpty);
+        _block($video);
         disableStartButton();
-        enableControl();
     }
 
     function resetClass($elem, classToAdd, classToRemove) {
         $elem.classList.remove(classToRemove);
         $elem.classList.add(classToAdd);        
-    }
-
-    function disableElem($elem) {
-        resetClass($elem, 'disabled', 'enabled');
-    }
-
-    function enableElem($elem) {
-        resetClass($elem, 'enabled', 'disabled');
     }
 
     function disableStartButton() {
@@ -122,14 +168,6 @@ window.addEventListener('DOMContentLoaded', () => {
 
     function enableStartButton() {
         resetClass($start, 'enabled', 'disabled');
-    }
-
-    function disableControl() {
-        disableElem($droneControlArea);
-    }
-
-    function enableControl() {
-        enableElem($droneControlArea);
     }
 
     function showMessage(message, level) {
@@ -254,29 +292,24 @@ window.addEventListener('DOMContentLoaded', () => {
     }
 
     function resizeVideo() {
-        console.debug(`$video ${$video.videoWidth}/${$video.videoHeight}`);
-        let aspectRatio = $video.videoWidth / $video.videoHeight;
-        if ($video.videoHeight === 0) {
-            aspectRatio = 16 / 9;
+        const videoWidth = $video.videoWidth;
+        const videoHeight = $video.videoHeight;
+        const aspectRatio = !videoHeight ? 16/9 : videoWidth / videoHeight; 
+    
+        let videoSectionWidth = window.innerWidth;
+        let videoSectionHeight = videoSectionWidth / aspectRatio;
+        const windowHeight = window.innerHeight * 0.9;
+        if (windowHeight < videoSectionHeight) {
+            videoSectionHeight = windowHeight;
+            videoSectionWidth = videoSectionHeight * aspectRatio;
         }
-        const width = Math.max(window.innerWidth * 0.98, 480);
-        const height = width / aspectRatio;
-        let videoAreaHeight = height;
-
-        if (width <= 840) {
-            resetClass($droneControlArea, 'narrow', 'wide');
-            videoAreaHeight += 120;
-        } else {
-            resetClass($droneControlArea, 'wide', 'narrow');
-        }
-        console.debug(`Calculated video width and height: ${width}/${height}`);
-        $droneVideoArea.style.width = `${width}px`;
-        $droneVideoArea.style.height = `${videoAreaHeight}px`;
-        $droneVideoEmpty.style.width = `${width}px`;
-        $droneVideoEmpty.style.height = `${videoAreaHeight}px`;
-        $droneVideoEmpty.style['line-height'] = `${videoAreaHeight}px`;
-        $video.style.width = `${width}px`;
-        $video.style.height = `${height}px`;
+        console.debug(`video ${videoSectionWidth}/${videoSectionHeight}`);
+        $mainSection.style.width = `${videoSectionWidth}px`;
+        $mainSection.style.height = `${videoSectionHeight}px`;
+        $videoEmpty.style.width = `${videoSectionWidth}px`;
+        $videoEmpty.style.height = `${videoSectionHeight}px`;
+        $video.style.width = `${videoSectionWidth}px`;
+        $video.style.height = `${videoSectionHeight}px`;
     }
 
     function prepareDataChannel() {
@@ -470,39 +503,49 @@ window.addEventListener('DOMContentLoaded', () => {
         checkAndTryTimer = setTimeout(checkAndTry, TRY_INTERVAL_MILLIS);
     }
 
-    _click($start, () => {
-        if (state !== STATE.INIT) {
+    /*
+     * Sends a x,y coordinate each 100ms
+     */
+    async function doSendJoystickXy() {
+        await sendJoystickXyIfNecessary();
+        setTimeout(doSendJoystickXy, 100);
+    }
+
+    async function sendJoystickXyIfNecessary() {
+        if (!xyCoordToSend) {
             return;
         }
-        setUpConnection();
-    });
-    window.addEventListener('resize', resizeVideo);
-    _click($messageContent, () => _none($messageArea));
-
-    function sendCommand(command) {
-        dc.send(JSON.stringify({ command }));
+        await sendJoystickXy(xyCoordToSend);
     }
 
-    function setUpControl(selector, command) {
-        const $elem = document.querySelector(selector);
-        $elem.addEventListener('click', async () => {
-            if (state === STATE.TAKEOFF) {
-                sendCommand(command);
-            }
-        });
+    function sendJoystickXy(xy) {
+        sendJoystickCommand(xy);
     }
-    
-    setUpControl('#moveForward', 'forward');
-    setUpControl('#moveRight', 'right');
-    setUpControl('#moveBackward', 'back');
-    setUpControl('#moveLeft', 'left');
-    
-    setUpControl('#moveUp', 'up');
-    setUpControl('#turnRight', 'cw');
-    setUpControl('#moveDown', 'down');
-    setUpControl('#turnLeft', 'ccw');
 
+    /*
+     * Sends a z,r coordinate each 100ms
+    */
+    async function doSendJoystickZr() {
+        await sendJoystickZrIfNecessary();
+        setTimeout(doSendJoystickZr, 100);
+    }
 
-    init();
-    resizeVideo();
+    async function sendJoystickZrIfNecessary() {
+        if (!zrCoordToSend) {
+            return;
+        }
+        await sendJoystickZr(zrCoordToSend);
+    }
+
+    function sendJoystickZr(zr) {
+        sendJoystickCommand(zr);
+    }
+
+    function sendJoystickCommand(command) {
+        if (dc) {
+            dc.send(JSON.stringify({ command }));
+        } else {
+            console.debug('DataChannel is not opend.', command);
+        }
+    } 
 });

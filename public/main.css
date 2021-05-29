@@ -1,18 +1,31 @@
 @charset 'utf-8';
 
-ul {
-    list-style: none;
-    margin: 0;
+html,
+body {
     padding: 0;
+    margin: 0;
+    width: 100%;
+}
+
+html {
+    overflow: auto;
+    height: 100%;
 }
 
 body {
     color: #54636e;
     font-family: 'Meiryo', 'Meiryo UI', 'Yu Gothic', 'YuGothic', sans-serif;
     font-size: 16px;
+}
+
+ul {
+    list-style: none;
     margin: 0;
     padding: 0;
-    width: 100%;
+}
+
+.clear {
+    clear: both;
 }
 
 .start-area {
@@ -75,9 +88,9 @@ body {
     color: #afadad;
 }
 
-#app-area {
+.main-section {
     position: relative;
-    width: 100%;
+    margin: auto;
 }
 
 .message-area {
@@ -98,144 +111,45 @@ body {
     cursor: pointer;
 }
 
-.drone-video-empty {
-    position: relative;
+.video-empty {
     margin: auto;
-    line-height: 1;
-    text-align: center;
-    background-color: #d7d8db;
-    color: #afadad;
+    background-color: #6d6b6b;
+    position: relative;
 }
 
-.drone-video-area {
-    position: relative;
-    margin: auto;
+.video-empty > p {
+    color: #9ea0a0;
+    margin: 0;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    margin-right: -50%;
+    transform: translate(-50%, -50%);
 }
 
-.drone-control-area {
+.joystick-area {
+    position: absolute;
+    bottom: 0;
+    left: 0;
     width: 100%;
+    z-index: 100;
 }
 
-.drone-control-area.wide {
-    position: absolute;
-    z-index: 10;
-    bottom: 24px;
-    height: 120px;
-}
-
-.control {
-    overflow: hidden;
+.joysticks {
     margin: auto;
-    max-width: 540px;
-    min-width: 270px;
+    width: 80%;
+    overflow: hidden;
+    margin-bottom: 12px;
 }
 
-.move-container {
-    position: relative;
-    width: 120px;
-    height: 120px;
-    margin-right: 32px;
-    border: 2px dotted rgba(255, 255, 255, 0.603);
-    border-radius: 50%;
-}
-
-.move1-container {
+.container {
     float: left;
+    width: 50%;
 }
 
-.move2-container {
-    float: right;
-}
-
-.move1 {
-    position: absolute;
-    width: 32px;
-    height: 32px;
-    border: 1px solid #353333;
-    border-radius: 4px;
-    text-align: center;
-    line-height: 32px;
-    background: rgba(255, 255, 255, 0.9);
-}
-
-.move2 {
-    position: absolute;
-    width: 32px;
-    height: 32px;
-    border: 1px solid #353333;
-    border-radius: 4px;
-    text-align: center;
-    line-height: 32px;
-    writing-mode: vertical-rl;
-    background: rgba(255, 255, 255, 0.8);
-}
-
-.move2-r {
-    position: absolute;
-    width: 32px;
-    height: 32px;
-    border: 1px solid #353333;
-    border-radius: 4px;
-    background: rgba(255, 255, 255, 0.8);
-}
-
-.drone-control-area.enabled .move1,
-.drone-control-area.enabled .move2,
-.drone-control-area.enabled .move2-r {
-    cursor: pointer;
-}
-
-.drone-control-area.disabled .move1,
-.drone-control-area.disabled .move2,
-.drone-control-area.disabled .move2-r {
-    cursor: default;
-    background-color: #d7d8db;
-}
-
-.drone-control-area.enabled .move1:hover,
-.drone-control-area.enabled .move2:hover,
-.drone-control-area.enabled .move2-r:hover {
-    background-color: #e8f4fa;
-}
-
-.move-top {
-    top: 6px;
-    left: 42px;
-}
-
-.move-right {
-    top: 42px;
-    right: 6px;
-}
-
-.move-bottom {
-    top: 78px;
-    left: 42px;
-}
-
-.move-left {
-    top: 42px;
-    left: 6px;
-}
-
-.move2-r span {
+.joystick-ui {
+    margin: auto;
+    width: 200px;
+    height: 200px;
     display: block;
-    width: 24px;
-    height: 24px;
-    background-image: url('/rotate.png');
-    background-repeat: no-repeat;
-    background-size: 24px 24px;
-    margin: 4px 4px;
-}
-
-.move2.move-top {
-    text-orientation: sideways;
-}
-
-.move2-r.move-left {
-    transform: scale(-1, 1);
-}
-
-.clear {
-    clear: both;
 }
