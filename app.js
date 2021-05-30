@@ -2,9 +2,9 @@ const express = require('express');
 const crypto = require('crypto');
 const WebSocket = require('ws');
 const { verify, generateTurnCredentials } = require('./tools/token.js');
+const log4js = require('log4js');
 
 require('dotenv').config();
-console.log(`Environment: ${process.env.NODE_ENV}`);
 
 const PORT = process.env.PORT;
 const TOKEN_HASH = process.env.TOKEN_HASH;
@@ -14,14 +14,21 @@ const REMOTE_TIMEOUT_MILLIS = (process.env.PRIMARY_TIMEOUT_SEC || 10) * 1000;
 const REMOTE_TIMEOUT_CHECK_INTERVAL_MILLIS = 1000;
 
 const app = express();
+const logger = log4js.getLogger();
+
 app.use('/', express.static('public'));
 app.use('/audience', express.static('public'));
+logger.level = process.env.LOG_LEVEL || 'info';
+
+
+logger.info(`Environment: ${process.env.NODE_ENV}`);
+
 
 const startKeyLocalClientMap = new Map();
 const startKeyRemoteClientMap = new Map();
 
 const httpServer = app.listen(PORT, () => {
-    console.log(`Listening on ${PORT}.`);
+    logger.info(`Listening on ${PORT}.`);
 });
 
 const signalingServer = new WebSocket.Server({ noServer: true });
@@ -41,6 +48,7 @@ app.get('/generateKey', async (req, res) => {
 
     const isTokenValid = bearerStr === 'bearer' && await verify(inputToken || '', TOKEN_HASH);
     if (!isTokenValid) {
+        logger.warn('Invalid token.');
         res.status(401);
         res.setHeader('WWW-Authenticate', 'Bearer realm=""');
         res.send('');
@@ -84,14 +92,14 @@ class RemoteConnectionManager {
     stop() {
         clearTimeout(this.timer);
         clearTimeout(this.stopTimer);
-        console.log(' !!!! ____ _close ____ !!!! ');
+
+        logger.info(`Close the remote peer. ${this._peerConnectionId}/${this._isPrimary}`);
 
         if (this.ws.readyState === WebSocket.OPEN) {
             this.ws.close();
         }
         const localClient = this._localClientSupplier();
         if (!localClient) {
-            console.log('Local client is not opened.');
             return;
         }
         localClient.send(JSON.stringify({
@@ -114,7 +122,7 @@ signalingServer.on('connection', (ws, request) => {
     const startKey = url.searchParams.get('startKey');
 
     if (!startKeyLocalClientMap.has(startKey)) {
-        console.log(`Invalid startKey: ${startKey}`);
+        logger.warn(`Invalid startKey: ${startKey.slice(0, 5)}...`);
         ws.close();
         return;
     }
@@ -132,12 +140,12 @@ signalingServer.on('connection', (ws, request) => {
         const remoteClients = startKeyRemoteClientMap.get(startKey);
 
         if (!remoteClients) {
-            console.log('Remote client is not opened.');
+            logger.warn('Remote client is not opened. The startkey should be invalid.');
             return;
         }
         const remoteClient = remoteClients.get(peerConnectionId);
         if (!remoteClient || remoteClient.readyState !== WebSocket.OPEN) {
-            console.log('Remote client is not opened.');
+            logger.warn(`Remote client is not opened. The peerId(${peerConnectionId}) should be invalid.`);
             return;
         }
 
@@ -147,7 +155,7 @@ signalingServer.on('connection', (ws, request) => {
             remoteClient.send(data);
             break;
         default:
-            console.log(`Unexpected messageType from local: ${messageType}.`);
+            logger.warn(`Unexpected messageType from local: ${messageType}.`);
             return;
         }
         
@@ -173,9 +181,10 @@ remoteServer.on('connection', (ws, request) => {
     const peerConnectionId = parseFloat(url.searchParams.get('peerConnectionId'));
     const isPrimary = url.searchParams.get('isPrimary') === 'true';
 
-    console.log(`Requested peer: ${startKey}/${peerConnectionId}/${isPrimary}`);
+    logger.debug(`Requested peer: ${peerConnectionId}/${isPrimary}`);
+
     if (!startKeyLocalClientMap.has(startKey)) {
-        console.log(`Invalid startKey: ${startKey}`);
+        logger.warn(`Invalid startKey: ${startKey.slice(0, 5)}...`);
         ws.close();
         return;
     }
@@ -189,7 +198,7 @@ remoteServer.on('connection', (ws, request) => {
         const localClient = startKeyLocalClientMap.get(startKey);
 
         if (!localClient || localClient.readyState !== WebSocket.OPEN) {
-            console.log('Local client is not opened.');
+            logger.warn(`Local client is not opened. Remmote peer(${peerConnectionId}) accessed.`);
             return;
         }
         return localClient;
@@ -221,7 +230,7 @@ remoteServer.on('connection', (ws, request) => {
             connectionManager.consumePong();
             break;
         default:
-            console.log(`Unexpected messageType from local: ${messageType}.`);
+            logger.warn(`Unexpected messageType from local: ${messageType}.`);
             return;
         }
         

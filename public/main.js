@@ -10,6 +10,34 @@ window.addEventListener('DOMContentLoaded', () => {
         TAKEOFF: 3
     };
 
+    class Logger {
+
+        static debug(...args) {
+            if (window.__ojm_drone_remote_log_level <= 0) {
+                console.debug(...args);
+            }
+        }
+
+        static info(...args) {
+            if (window.__ojm_drone_remote_log_level <= 1) {
+                console.log(...args);
+            }
+        }
+
+        static warn(...args) {
+            if (window.__ojm_drone_remote_log_level <= 2) {
+                console.warn(...args);
+            }
+        }
+
+        static error(...args) {
+            if (window.__ojm_drone_remote_log_level <= 3) {
+                console.error(...args);
+            }
+        }
+    }
+    window.__ojm_drone_remote_log_level = 1;
+
     const peerConnectionId = Date.now();
     let webSocket;
     let iceServerInfo;
@@ -219,7 +247,7 @@ window.addEventListener('DOMContentLoaded', () => {
         try {
             closeRTCConnection();
         } catch(e) {
-            console.error(e);
+            Logger.error(e);
         }
     }
 
@@ -249,7 +277,7 @@ window.addEventListener('DOMContentLoaded', () => {
     }
 
     function createPeerConnection() {
-        console.debug(iceServerInfo);
+        Logger.debug(iceServerInfo);
 
         const config = {
             sdpSemantics: 'unified-plan'
@@ -270,7 +298,7 @@ window.addEventListener('DOMContentLoaded', () => {
         try {
             pc = new RTCPeerConnection(config);
         } catch(e) {
-            console.error('Try using RTCIceServer.url.', e);
+            Logger.error('Try using RTCIceServer.url.', e);
             if (iceServerInfo) {
                 config.iceServers = [
                     {
@@ -285,26 +313,26 @@ window.addEventListener('DOMContentLoaded', () => {
                 pc = new RTCPeerConnection(config);
             }
         }
-        console.debug(config);
+        Logger.debug(config);
     
         pc.addEventListener('connectionstatechange', () => {
-            console.debug(`connectionstatechange: ${pc.iceGatheringState}`);
+            Logger.debug(`connectionstatechange: ${pc.iceGatheringState}`);
         });
 
         pc.addEventListener('icegatheringstatechange', () => {
-            console.debug(`icegatheringstatechange: ${pc.iceGatheringState}`);
+            Logger.debug(`icegatheringstatechange: ${pc.iceGatheringState}`);
         });
     
         pc.addEventListener('iceconnectionstatechange', () => {
-            console.debug(`iceconnectionstatechange: ${pc.iceConnectionState}`);
+            Logger.debug(`iceconnectionstatechange: ${pc.iceConnectionState}`);
         });
     
         pc.addEventListener('signalingstatechange', () => {
-            console.debug(`signalingstatechange: ${pc.signalingState}`);
+            Logger.debug(`signalingstatechange: ${pc.signalingState}`);
         });
     
         pc.addEventListener('track', event => {
-            console.debug('track', event.streams);
+            Logger.debug('track', event.streams);
             if (event.track.kind == 'video') {
                 land();
 
@@ -329,7 +357,7 @@ window.addEventListener('DOMContentLoaded', () => {
             videoSectionHeight = windowHeight;
             videoSectionWidth = videoSectionHeight * aspectRatio;
         }
-        console.debug(`video ${videoSectionWidth}/${videoSectionHeight}`);
+        Logger.debug(`video ${videoSectionWidth}/${videoSectionHeight}`);
         $mainSection.style.width = `${videoSectionWidth}px`;
         $mainSection.style.height = `${videoSectionHeight}px`;
         $videoEmpty.style.width = `${videoSectionWidth}px`;
@@ -344,10 +372,10 @@ window.addEventListener('DOMContentLoaded', () => {
         }
         dc = pc.createDataChannel('command');
         dc.onclose = () => {
-            console.debug('data channel close');
+            Logger.debug('data channel close');
         };
         dc.onopen = () => {
-            console.debug('data channel open');
+            Logger.debug('data channel open');
         };
         dc.onmessage = event => {
             
@@ -375,12 +403,12 @@ window.addEventListener('DOMContentLoaded', () => {
         
         const gather = () => {
             return new Promise(function(resolve) {
-                console.debug('gather', pc.iceGatheringState);
+                Logger.debug('gather', pc.iceGatheringState);
                 if (pc.iceGatheringState === 'complete') {
                     resolve();
                 } else {
                     const checkState = () => {
-                        console.debug('gather', pc.iceGatheringState);
+                        Logger.debug('gather', pc.iceGatheringState);
                         if (pc.iceGatheringState === 'complete') {
                             pc.removeEventListener('icegatheringstatechange', checkState);
                             resolve();
@@ -453,7 +481,7 @@ window.addEventListener('DOMContentLoaded', () => {
                     break;
                 case 'SAME':
                     blockedByAnotherPrimaryPeerCount = 0;
-                    console.warn('Can not offer.');
+                    Logger.warn('Can not offer.');
                     break;
                 case 'EXIST':
                     blockedByAnotherPrimaryPeerCount++;
@@ -464,11 +492,11 @@ window.addEventListener('DOMContentLoaded', () => {
                     }
                     break;
                 default:
-                    console.warn('Unexpected state', dataJson.state);
+                    Logger.warn('Unexpected state', dataJson.state);
                 }
                 break;
             case 'answer':
-                console.debug('answer', dataJson.answer);
+                Logger.debug('answer', dataJson.answer);
                 if (dataJson.err) {
                     closeRTCConnectionQuietly();
                 } else {
@@ -493,7 +521,7 @@ window.addEventListener('DOMContentLoaded', () => {
         };
 
         webSocket.onopen = async () => {
-            console.debug('open!!');
+            Logger.debug('open!!');
         };
 
         webSocket.onclose = () => {
@@ -517,7 +545,7 @@ window.addEventListener('DOMContentLoaded', () => {
             return;
         }
         const tryToConnect = async () => {
-            console.log(`try to connect ${pc.connectionState} - ${!dc ? '' : dc.readyState}.`);
+            Logger.info(`try to connect ${pc.connectionState} - ${!dc ? '' : dc.readyState}.`);
             checkIfCanOffer();
         };
 
@@ -559,7 +587,7 @@ window.addEventListener('DOMContentLoaded', () => {
             readyView();
             await tryToConnect();
         } else {
-            console.log(`Connection is valid. don't need to try (${newOrConnectingCount},${dataChannelConnectingCount}).`);
+            Logger.info(`Connection is valid. don't need to try (${newOrConnectingCount},${dataChannelConnectingCount}).`);
         }
         checkAndTryTimer = setTimeout(checkAndTry, TRY_INTERVAL_MILLIS);
     }
@@ -606,7 +634,8 @@ window.addEventListener('DOMContentLoaded', () => {
         if (dc) {
             dc.send(JSON.stringify({ command }));
         } else {
-            console.debug('DataChannel is not opend.', command);
+            Logger.debug('DataChannel is not opend.', command);
         }
-    } 
+    }
+
 });
