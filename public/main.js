@@ -16,10 +16,13 @@ window.addEventListener('DOMContentLoaded', () => {
     let pc;
     let dc;
     let state;
+    const isPrimary = location.pathname === '/';
 
     let newOrConnectingCount = 0;
     let dataChannelConnectingCount = 0;
+    let blockedByAnotherPrimaryPeerCount = 0;
     const TRY_CONNECTING_COUNT = 3;
+    const TRY_PRIMARY_COUNT = 10;
     const TRY_INTERVAL_MILLIS = 1000;
     let checkAndTryTimer;
     let messageTimer;
@@ -33,8 +36,8 @@ window.addEventListener('DOMContentLoaded', () => {
     const _click = ($elem, handler) => $elem.addEventListener('click', handler);
 
     /* start area */
-    const $start = _q('#start');
     const $startKey = _q('#startKey');
+    const $start = _q('#start');
 
     /* main section */
     const $messageArea = _q('#messageArea');
@@ -42,7 +45,7 @@ window.addEventListener('DOMContentLoaded', () => {
     const $mainSection = _q('#mainSection');
     const $videoEmpty = _q('#videoEmpty');
     const $video = _q('#video');
-
+    const $joystickArea = _q('#joystickArea');
 
     /* JoyStick */
     const zrJoyStickUI = new ZrJoyStickUI({
@@ -100,9 +103,17 @@ window.addEventListener('DOMContentLoaded', () => {
 
     function init() {
         clearTimeout(checkAndTryTimer);
+        clearTimeout(messageTimer);
         state = STATE.INIT;
         initView();
         closeRTCConnectionQuietly();
+
+        newOrConnectingCount = 0;
+        dataChannelConnectingCount = 0;
+        blockedByAnotherPrimaryPeerCount = 0;
+
+        xyCoordToSend = undefined;
+        zrCoordToSend = undefined;
     }
 
     function initView() {
@@ -112,6 +123,14 @@ window.addEventListener('DOMContentLoaded', () => {
         _block($videoEmpty);
         _none($video);
         enableStartButton();
+
+        if (isPrimary) {
+            $start.textContent = 'START';
+            _block($joystickArea);
+        } else {
+            $start.textContent = 'JOIN';
+            _none($joystickArea);
+        }
     }
 
     function ready() {
@@ -135,7 +154,12 @@ window.addEventListener('DOMContentLoaded', () => {
     }
 
     function landView() {
-        showMessage('The connection to the remote peer is established. Please wait until the drone takes off.');
+        if (isPrimary) {
+            showMessage('The connection to the remote peer is established. Please wait until the drone takes off.');
+        } else {
+            showMessage('The connection to the remote peer is established.');
+        }
+
         $startKey.disabled = true;
         $start.disabled = true;
         _none($videoEmpty);
@@ -149,7 +173,9 @@ window.addEventListener('DOMContentLoaded', () => {
     }
 
     function takeoffView() {
-        showMessage('The drone took off. Now you can control the drone. Enjoy!!');
+        if (isPrimary) {
+            showMessage('The drone took off. Now you can control the drone. Enjoy!!');
+        }
         $startKey.disabled = true;
         $start.disabled = true;
         _none($videoEmpty);
@@ -313,6 +339,9 @@ window.addEventListener('DOMContentLoaded', () => {
     }
 
     function prepareDataChannel() {
+        if (!isPrimary) {
+            return;
+        }
         dc = pc.createDataChannel('command');
         dc.onclose = () => {
             console.debug('data channel close');
@@ -371,6 +400,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
         webSocket.send(JSON.stringify({
             messageType: 'offer',
+            peerConnectionId,
             offer: {
                 sdp: offerLocalDesc.sdp,
                 type: offerLocalDesc.type,
@@ -390,7 +420,8 @@ window.addEventListener('DOMContentLoaded', () => {
         }
         webSocket.send(JSON.stringify({
             messageType: 'canOffer',
-            peerConnectionId
+            peerConnectionId,
+            isPrimary
         }));
     }
 
@@ -400,7 +431,10 @@ window.addEventListener('DOMContentLoaded', () => {
         const startKey = $startKey.value;
 
         const wsProtocol = 0 <= location.protocol.indexOf('https') ? 'wss' : 'ws';
-        webSocket = new WebSocket(`${wsProtocol}://${location.host}/remote?startKey=${startKey}`);
+        const url = `${wsProtocol}://${location.host}/remote?startKey=${startKey}&peerConnectionId=${peerConnectionId}&isPrimary=${isPrimary}`;
+        webSocket = new WebSocket(url);
+
+        let onerror;
         webSocket.onmessage = async event => {
             const dataJson = JSON.parse(event.data);
             const messageType = dataJson.messageType;
@@ -408,26 +442,49 @@ window.addEventListener('DOMContentLoaded', () => {
             switch(messageType) {
             case 'iceServerInfo':
                 iceServerInfo = dataJson.iceServerInfo;
-                checkIfCanOffer();
+                // checkIfCanOffer();
                 break;
             case 'canOffer':
-                if (dataJson.canOffer) {
+                switch(dataJson.state) {
+                case 'EMPTY':
+                    blockedByAnotherPrimaryPeerCount = 0;
                     closeRTCConnectionQuietly();
                     await startCreatingConnection();
-                } else {
+                    break;
+                case 'SAME':
+                    blockedByAnotherPrimaryPeerCount = 0;
                     console.warn('Can not offer.');
+                    break;
+                case 'EXIST':
+                    blockedByAnotherPrimaryPeerCount++;
+                    if (TRY_PRIMARY_COUNT < blockedByAnotherPrimaryPeerCount) {
+                        onerror = true;
+                        alert('Another peer is now controlling the drone. Please retry later or join as an audience.');
+                        webSocket.close();
+                    }
+                    break;
+                default:
+                    console.warn('Unexpected state', dataJson.state);
                 }
                 break;
             case 'answer':
                 console.debug('answer', dataJson.answer);
-                pc.setRemoteDescription(dataJson.answer);
+                if (dataJson.err) {
+                    closeRTCConnectionQuietly();
+                } else {
+                    pc.setRemoteDescription(dataJson.answer);
+                }
+                break;
+            case 'ping':
+                webSocket.send(JSON.stringify({
+                    messageType: 'pong'
+                }));
                 break;
             default:
                 return;
             }
         };
 
-        let onerror;
         webSocket.onerror = () => {
             alert('Failed to start connecting to the remote peer. The input code may be invalid.');
             onerror = true;
@@ -454,13 +511,13 @@ window.addEventListener('DOMContentLoaded', () => {
     }
 
     async function checkAndTry() {
-        if (state === STATE.INIT || !pc || !dc) {
+        if (state === STATE.INIT || !pc) {
             checkIfCanOffer();
             checkAndTryTimer = setTimeout(checkAndTry, TRY_INTERVAL_MILLIS);
             return;
         }
         const tryToConnect = async () => {
-            console.log(`try to connect ${pc.connectionState} - ${dc.readyState}.`);
+            console.log(`try to connect ${pc.connectionState} - ${!dc ? '' : dc.readyState}.`);
             checkIfCanOffer();
         };
 
@@ -476,16 +533,20 @@ window.addEventListener('DOMContentLoaded', () => {
                                               pc.connectionState === 'failed' ||
                                               pc.connectionState === 'closed';
 
-        const isDataChannelConnecting = dc.connectionState === 'connectiong';
-        if (isDataChannelConnecting) {
-            dataChannelConnectingCount++;
-        } else {
-            dataChannelConnectingCount = 0;
+        
+        let isDataChannelConnecting = false;
+        let isDataChannelStateNotValid = false;
+        if (dc) {
+            isDataChannelConnecting = dc.connectionState === 'connectiong';
+            if (isDataChannelConnecting) {
+                dataChannelConnectingCount++;
+            } else {
+                dataChannelConnectingCount = 0;
+            }
+    
+            isDataChannelStateNotValid = dc.readyState === 'closing' || 
+                                               dc.readyState === 'closed';
         }
-
-        const isDataChannelStateNotValid = dc.readyState === 'closing' || 
-                                           dc.readyState === 'closed';
-
                                            
         if (
             (isNewOrConnectiong && TRY_CONNECTING_COUNT < newOrConnectingCount) || 

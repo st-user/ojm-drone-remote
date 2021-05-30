@@ -65,7 +65,7 @@ ul {
     height: 26px;
 }
 
-.start {
+.start-button {
     height: 24px;
     width: 80px;
     line-height: 24px;
@@ -73,19 +73,23 @@ ul {
     border: 1px solid #585555;
 }
 
-.start.enabled {
+.start-button.enabled {
     cursor: pointer;
     background-color: #fff;
     color: #353333;
 }
 
-.start.enabled:hover {
+.start-button.enabled:hover {
     background-color: #e8f4fa;
 }
 
-.start.disabled {
+.start-button.disabled {
     background-color: #d7d8db;
     color: #afadad;
+}
+
+.join {
+    margin-left: 24px;
 }
 
 .main-section {
