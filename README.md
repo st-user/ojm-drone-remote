@@ -1,6 +1,6 @@
 # ojm-drone-remote/ojm-drone-local
 
-The toy application to control [Tello EDU](https://www.ryzerobotics.com/jp/tello-edu) on a browser over the internet using WebRTC.
+The toy application to control [Tello/Tello EDU](https://www.ryzerobotics.com/jp/tello) on a browser over the internet using WebRTC.
 This application is made by the author personally and is **NOT** an official application by Ryze tech. 
 
 This 'ojm-drone-remote' is used together with ['ojm-drone-local'](https://github.com/st-user/ojm-drone-local). So I'll explain about both 'ojm-drone-remote' and 'ojm-drone-local' in this README.
@@ -28,10 +28,10 @@ This 'ojm-drone-remote' is used together with ['ojm-drone-local'](https://github
     - Node.js 14 or later
 
  - ojm-drone-local
-    - Python 3.7 or later
+    - GO 1.16 or later
 
  - drone
-    - [Tello EDU](https://www.ryzerobotics.com/jp/tello-edu) (controlled by using [SDK 2.0](https://dl-cdn.ryzerobotics.com/downloads/Tello/Tello%20SDK%202.0%20User%20Guide.pdf))
+    - [Tello/Tello EDU](https://www.ryzerobotics.com/jp/tello)
 
 
 # How to install
@@ -67,9 +67,6 @@ copy template.env .env
 ```
 git clone https://github.com/st-user/ojm-drone-local.git
 cd ojm-drone-local
-python -m venv venv
-source ./venv/bin/activate
-pip install -r requirements.txt
 cp template.env .env
 ```
 
@@ -78,14 +75,8 @@ cp template.env .env
 ```
 git clone https://github.com/st-user/ojm-drone-local.git
 cd ojm-drone-local
-python -m venv venv
-.\venv\Scripts\activate.bat
-pip install -r requirements.txt
 copy template.env .env
 ```
-
-(When you use PowerShell, the command that activates venv is slightly different.)
-
 
 # How to use
 
@@ -118,22 +109,24 @@ You should see a web page like:
 
 ### ojm-drone-local
 
-**NOTE**: If you set the environment variable `USE_DRONE` to `True` in `.env` of 'ojm-drone-local', make sure that your PC on which 'ojm-drone-local' app runs successfully connects to Tello EDU by Wi-Fi.
+**NOTE**: Please make sure that your PC on which 'ojm-drone-local' app runs successfully connects to Tello via Wi-Fi.
 
 Open the terminal different from the one that you run `node app.js` above, move to the project's root directory and run:
 
 #### macOS
 
 ```
-source ./venv/bin/activate
-python run.py
+cd server
+env GO_ENV_FILE_PATH=../.env GO_STATIC_FILE_DIR=../client/static go run .
 ```
 
 #### Windows 10
 
 ```
-.\venv\Scripts\activate.bat
-python run.py
+cd server
+set GO_ENV_FILE_PATH=..\.env
+set GO_STATIC_FILE_DIR=..\client\static
+go run .
 ```
 
 When the application starts without errors, open your browser and access:
@@ -160,22 +153,14 @@ You should see a web page like:
    ![ojm-drone-remote-result](./README-images/ojm-drone-remote_2.png)
 
    **NOTE**:
-
-   When the environment variable `USE_DRONE` is `False`, you should see the test movie like the image above.
    
-   On the other hand, when the enviroment variable `USE_DRONE` is `True`, you should see the video that Tello EDU caputures by its webcam.
+   You should see the video that Tello caputures by its webcam.
 
 
 
 6. At the 'ojm-drone-local' web page, click 'Takeoff' button.
 
-   When 'Takeoff' button is clicked, the bottom buttons at the 'ojm-drone-remote' web page become clickable.
-
-
-   **NOTE**:
-
-   When the environment variable `USE_DRONE` is `False`, the bottom buttons become clickable but nothing happends in addition.
-   On the other hand, when the enviroment variable `USE_DRONE` is `True`, the bottom buttons become clickable and Tello EDU takes off!
+   Tello takes off and at the 'ojm-drone-remote' web page, you can control Tello with the UI like a joy sticks!
 
 
 **NOTE**:
