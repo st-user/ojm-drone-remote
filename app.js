@@ -130,6 +130,20 @@ signalingServer.on('connection', (ws, request) => {
     startKeyLocalClientMap.set(startKey, ws);
     ws.__startKey = startKey;
 
+    let pingTimer;
+    const ping = () => {
+        if (ws.readyState === WebSocket.OPEN) {
+            ws.send(JSON.stringify({
+                messageType: 'ping'
+            }));
+        }
+    };
+    const doPing = () => {
+        ping();
+        pingTimer = setTimeout(doPing, 5000);
+    };
+    doPing();
+    
     ws.on('message', data => {
 
         const dataJson = JSON.parse(data);
@@ -138,6 +152,10 @@ signalingServer.on('connection', (ws, request) => {
 
         const startKey = ws.__startKey;
         const remoteClients = startKeyRemoteClientMap.get(startKey);
+
+        if (messageType === 'pong') {
+            return;
+        }
 
         if (!remoteClients) {
             logger.warn('Remote client is not opened. The startkey should be invalid.');
@@ -167,6 +185,10 @@ signalingServer.on('connection', (ws, request) => {
         turn: TURN_URL,
         credentials
     };
+
+    ws.on('close', () => {
+        clearTimeout(pingTimer);
+    });
 
     ws.send(JSON.stringify({ 
         messageType: 'iceServerInfo',
