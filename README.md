@@ -113,10 +113,22 @@ You should see a web page like:
 
 Open the terminal different from the one that you run `node app.js` above, move to the project's root directory and run:
 
+
+### macOS/Windows 10
+
+For simplicity, **remove** the line below in `server/go.mod` file.
+
+```
+replace gobot.io/x/gobot => ../../gobot
+```
+(When you remove the line, 'ojm-drone-local' can't successfully resume the connection to the Tello. So now I slightly modify [gobot](https://github.com/hybridgroup/gobot/) [Tello](https://github.com/hybridgroup/gobot/tree/release/platforms/dji/tello) module. (https://github.com/hybridgroup/gobot/issues/793))
+
+
 #### macOS
 
 ```
 cd server
+go mod tidy
 env GO_ENV_FILE_PATH=../.env GO_STATIC_FILE_DIR=../client/static go run .
 ```
 
@@ -124,6 +136,7 @@ env GO_ENV_FILE_PATH=../.env GO_STATIC_FILE_DIR=../client/static go run .
 
 ```
 cd server
+go mod tidy
 set GO_ENV_FILE_PATH=..\.env
 set GO_STATIC_FILE_DIR=..\client\static
 go run .
