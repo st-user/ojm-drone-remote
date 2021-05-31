@@ -111,8 +111,6 @@ You should see a web page like:
 
 **NOTE**: Please make sure that your PC on which 'ojm-drone-local' app runs successfully connects to Tello via Wi-Fi.
 
-Open the terminal different from the one that you run `node app.js` above, move to the project's root directory and run:
-
 
 ### macOS/Windows 10
 
@@ -123,6 +121,8 @@ replace gobot.io/x/gobot => ../../gobot
 ```
 (When you remove the line, 'ojm-drone-local' can't successfully resume the connection to the Tello. So now I slightly modify [gobot](https://github.com/hybridgroup/gobot/) [Tello](https://github.com/hybridgroup/gobot/tree/release/platforms/dji/tello) module. (https://github.com/hybridgroup/gobot/issues/793))
 
+
+Open the terminal different from the one that you run `node app.js` above, move to the project's root directory and run:
 
 #### macOS
 
