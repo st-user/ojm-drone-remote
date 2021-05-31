@@ -66,6 +66,7 @@ window.addEventListener('DOMContentLoaded', () => {
     /* start area */
     const $startKey = _q('#startKey');
     const $start = _q('#start');
+    const $toAudience = _q('#toAudience');
 
     /* main section */
     const $messageArea = _q('#messageArea');
@@ -117,6 +118,9 @@ window.addEventListener('DOMContentLoaded', () => {
         }
         setUpConnection();
     });
+    _click($toAudience, () => {
+        location.href = '/audience';
+    });
     window.addEventListener('resize', resizeVideo);
     _click($messageContent, () => _none($messageArea));
 
@@ -154,9 +158,11 @@ window.addEventListener('DOMContentLoaded', () => {
 
         if (isPrimary) {
             $start.textContent = 'START';
+            _block($toAudience);
             _block($joystickArea);
         } else {
             $start.textContent = 'JOIN';
+            _none($toAudience);
             _none($joystickArea);
         }
     }
@@ -171,6 +177,7 @@ window.addEventListener('DOMContentLoaded', () => {
         showMessage('Now connecting to the remote peer that controls the drone. Please wait a minute.');
         $startKey.disabled = true;
         $start.disabled = true;
+        _none($toAudience);
         _block($videoEmpty);
         _none($video);
         disableStartButton();
@@ -190,6 +197,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
         $startKey.disabled = true;
         $start.disabled = true;
+        _none($toAudience);
         _none($videoEmpty);
         _block($video);
         disableStartButton();
@@ -206,6 +214,7 @@ window.addEventListener('DOMContentLoaded', () => {
         }
         $startKey.disabled = true;
         $start.disabled = true;
+        _none($toAudience);
         _none($videoEmpty);
         _block($video);
         disableStartButton();

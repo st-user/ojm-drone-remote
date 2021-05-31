@@ -29,7 +29,6 @@ ul {
 }
 
 .start-area {
-    height: 36px;
     margin-bottom: 12px;
     min-width: 684px;
 }
@@ -45,7 +44,6 @@ ul {
 
 .start-control-wrapper {
     margin-top: 6px;
-    width: 50%;
     float: left;
 }
 
@@ -88,8 +86,19 @@ ul {
     color: #afadad;
 }
 
-.join {
+.to-audience {
+    margin-top: 6px;
+    text-decoration: underline;
+    cursor: pointer;
+    color: #42accb;
+    height: 24px;
+    line-height: 24px;
+    float: left;
     margin-left: 24px;
+}
+
+.to-audience:hover {
+    text-decoration: none;
 }
 
 .main-section {
