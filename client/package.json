@@ -1,0 +1,45 @@
+{
+  "name": "ojm-drone-remote",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "clean": "rm -Rf dist && rm -Rf dist-discard && rm -Rf scss-dest",
+    "build": "node-sass scss --output scss-dest --output-style compressed && node-sass base-scss --output scss-dest --output-style compressed && webpack --config webpack.prod.js && node ./build-util/bu.js",
+    "build:test": "webpack --config webpack.dev.js",
+    "build:watch": "webpack --config webpack.dev.js --watch",
+    "license-gen": "webpack --config webpack.license-gen.js",
+    "lint:js-one": "eslint",
+    "lint:js": "eslint 'src/**/*.js'",
+    "lint:css": "stylelint 'scss/**/*.scss'",
+    "lint:html": "htmlhint 'html/index.html'",
+    "build-css": "node-sass scss --output scss-dest --output-style compressed && node-sass base-scss --output scss-dest --output-style compressed"
+  },
+  "author": "Tomoki Sato",
+  "license": "MIT",
+  "devDependencies": {
+    "@babel/core": "^7.14.3",
+    "@babel/eslint-parser": "^7.14.4",
+    "@babel/plugin-proposal-class-properties": "^7.13.0",
+    "@babel/plugin-proposal-private-methods": "^7.13.0",
+    "@babel/preset-env": "^7.14.4",
+    "babel-loader": "^8.2.2",
+    "clean-webpack-plugin": "^3.0.0",
+    "copy-webpack-plugin": "^9.0.0",
+    "css-loader": "^5.2.6",
+    "eslint": "^7.27.0",
+    "htmlhint": "^0.14.2",
+    "node-sass": "^6.0.0",
+    "style-loader": "^2.0.0",
+    "stylelint": "^13.13.1",
+    "stylelint-config-sass-guidelines": "^8.0.0",
+    "stylelint-no-unsupported-browser-features": "^5.0.1",
+    "webpack": "^5.38.1",
+    "webpack-cli": "^4.7.0",
+    "webpack-license-plugin": "^4.1.2",
+    "webpack-merge": "^5.7.3"
+  }
+}

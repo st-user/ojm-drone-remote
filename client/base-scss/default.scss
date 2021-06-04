@@ -1,0 +1,24 @@
+@charset "utf-8";
+
+html {
+    height: 100%;
+    width: 100%;    
+}
+
+body {
+    background-image: radial-gradient(#282424, 10%, transparent 10%);
+    background-size: 5px 5px;
+    color: #54636e;
+    font-family: 'Meiryo', 'Meiryo UI', 'Yu Gothic', 'YuGothic', sans-serif;
+    font-size: 16px;
+    height: 100%;
+    width: 100%;
+}
+
+h2 {
+    font-size: 24px;
+}
+
+h3 {
+    font-size: 18px;
+}
