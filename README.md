@@ -213,3 +213,12 @@ TURN_URL=...
 ```
 
 For more information, please see the documentations in `.env` file of 'ojm-drone-remote'.
+
+
+# LICENSE
+
+MIT
+
+**NOTE**:
+
+Please do not use the icon(s) in the `client/assets` directory without the author's permission.

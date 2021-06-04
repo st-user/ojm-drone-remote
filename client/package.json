@@ -1,11 +1,8 @@
 {
   "name": "ojm-drone-remote",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
-  "directories": {
-    "test": "test"
-  },
+  "description": "ojm-drone-remote (client side)",
+  "private": true,
   "scripts": {
     "clean": "rm -Rf ../server/dist && rm -Rf dist-discard && rm -Rf scss-dest",
     "build": "node-sass scss --output scss-dest --output-style compressed && node-sass base-scss --output scss-dest --output-style compressed && webpack --config webpack.prod.js && node ./build-util/bu.js",

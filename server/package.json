@@ -1,8 +1,8 @@
 {
   "name": "ojm-tello-remote",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "ojm-drone-remote (server side)",
+  "private": true,
   "scripts": {
     "lint:js": "eslint '*.js' 'components/**/*.js'"
   },
