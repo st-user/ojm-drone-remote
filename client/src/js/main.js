@@ -228,11 +228,11 @@ export default function main() {
         }
     
         function disableStartButton() {
-            resetClass($start, 'disabled', 'enabled');
+            resetClass($start, 'is-disabled', 'is-enabled');
         }
     
         function enableStartButton() {
-            resetClass($start, 'enabled', 'disabled');
+            resetClass($start, 'is-enabled', 'is-disabled');
         }
     
         function showMessage(message, level) {

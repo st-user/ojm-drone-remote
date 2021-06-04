@@ -1,18 +1,27 @@
 @charset "utf-8";
 
+html,
+body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+}
+
 html {
     height: 100%;
-    width: 100%;    
+    overflow: auto;
 }
 
 body {
-    background-image: radial-gradient(#282424, 10%, transparent 10%);
-    background-size: 5px 5px;
     color: #54636e;
     font-family: 'Meiryo', 'Meiryo UI', 'Yu Gothic', 'YuGothic', sans-serif;
     font-size: 16px;
-    height: 100%;
-    width: 100%;
+}
+
+ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
 }
 
 h2 {
