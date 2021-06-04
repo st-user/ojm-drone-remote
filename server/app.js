@@ -1,7 +1,7 @@
 const express = require('express');
 const crypto = require('crypto');
 const WebSocket = require('ws');
-const { verify, generateTurnCredentials } = require('./tools/token.js');
+const { verify, generateTurnCredentials } = require('./components/token.js');
 const log4js = require('log4js');
 
 require('dotenv').config();
@@ -16,8 +16,8 @@ const REMOTE_TIMEOUT_CHECK_INTERVAL_MILLIS = 1000;
 const app = express();
 const logger = log4js.getLogger();
 
-app.use('/', express.static('public'));
-app.use('/audience', express.static('public'));
+app.use('/', express.static('dist'));
+app.use('/audience', express.static('dist'));
 logger.level = process.env.LOG_LEVEL || 'info';
 
 

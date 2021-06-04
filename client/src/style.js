@@ -6,4 +6,4 @@ import '../scss-dest/default.css';
 import '../scss-dest/main.css';
 
 
-import '../scss-dest/main.css';
+import '../scss-dest/main-section.css';

@@ -19,7 +19,7 @@ module.exports = merge(common, {
                 }
                 return false;
             },
-            outputFilename: `../dist/oss-licenses.json`
+            outputFilename: `../../server/dist/oss-licenses.json`
         })
     ]
 });

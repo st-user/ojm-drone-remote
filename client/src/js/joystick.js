@@ -353,3 +353,5 @@ class XyJoyStickUI extends JoyStickUI { // eslint-disable-line no-unused-vars
         );
     }
 }
+
+export { XyJoyStickUI, ZrJoyStickUI };
