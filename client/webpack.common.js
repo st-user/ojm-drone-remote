@@ -9,7 +9,7 @@ module.exports = {
         style: './src/style.js'
     },
     output: {
-        filename: `./js/[name].js`,
+        filename: './js/[name].js',
         path: path.resolve(__dirname, '../server/dist/'),
     },
     module: {
@@ -29,7 +29,7 @@ module.exports = {
                 test: /\.(png|svg|jpg|jpeg|gif)$/i,
                 type: 'asset/resource',
                 generator: {
-                    filename: `[hash][ext]` + '?q=' + packageInfo.version
+                    filename: '[hash][ext]' + '?q=' + packageInfo.version
                 }
             },
             {
@@ -48,8 +48,8 @@ module.exports = {
         new CleanWebpackPlugin(),
         new CopyPlugin({
             patterns: [
-                { from: './html/index.html', to: `.` },
-                { from: './assets/favicon.ico', to: `.` }
+                { from: './html/index.html', to: '.' },
+                { from: './assets/favicon.ico', to: '.' }
             ],
         })
     ]

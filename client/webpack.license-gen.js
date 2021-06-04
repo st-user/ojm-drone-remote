@@ -2,7 +2,6 @@ const { merge } = require('webpack-merge');
 const common = require('./webpack.common.js');
 const LicensePlugin = require('webpack-license-plugin');
 const path = require('path');
-const packageInfo = require('./package.json');
 
 module.exports = merge(common, {
     entry: {
@@ -13,13 +12,10 @@ module.exports = merge(common, {
     },
     plugins: [
         new LicensePlugin({
-            excludedPackageTest: (packageName) => {
-                if (packageName.startsWith('vncho-lib')) {
-                    return true;
-                }
+            excludedPackageTest: () => {
                 return false;
             },
-            outputFilename: `../../server/dist/oss-licenses.json`
+            outputFilename: '../../server/dist/oss-licenses.json'
         })
     ]
 });
