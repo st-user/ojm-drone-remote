@@ -1,11 +1,8 @@
 #!include:.env
 node_modules
-template.env
-.gitignore
-.git
-README-images
-.eslintrc.json
-.stylelintrc.json
-README.md
 .DS_Store
 .gcloudignore
+.eslintrc.json
+template.env
+README.md
+
