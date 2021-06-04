@@ -4,8 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "lint:js": "eslint '*.js' 'public/**/*.js' './tools/**/*.js'",
-    "lint:css": "stylelint 'public/**/*.css'"
+    "lint:js": "eslint '*.js' 'components/**/*.js'"
   },
   "author": "Tomoki Sato",
   "license": "MIT",
