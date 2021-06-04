@@ -4,7 +4,8 @@
         <meta charset="UTF-8">
         <title>OJM-Drone</title>
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css" integrity="sha512-NhSC1YmyruXifcj/KFRWoC561YpHpc5Jtzgvbuzx5VozKpWvQ+4nXhPdFgmx8xqexRcpAglTj9sIBWINXa8x5w==" crossorigin="anonymous" />
-        <script src="./js/style.js"></script>
+        <script src="./js/style.js?q=!_____APP_VERSION_____!"></script>
+        <!-- ##GA-TrackingCodeHere## -->
     </head>
     <body>
 
@@ -43,6 +44,14 @@
             </div>
         </section>
 
-        <script src="./js/main.js"></script>
+        <script>
+            var APP_VERSION = '!_____APP_VERSION_____!';
+            (function() {
+                var SCRIPT_SRC = './js/main.js?q=' + APP_VERSION;
+                var $script = document.createElement('script');
+                $script.src = SCRIPT_SRC;
+                document.body.appendChild($script);
+            })();
+        </script>
     </body>
 </html>
