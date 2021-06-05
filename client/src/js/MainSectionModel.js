@@ -18,11 +18,11 @@ export default class MainSectionModel {
         this.#rtcHandler.setUpConnection(startKey);
     }
 
-    setZrCoordToSend(coord) {
-        this.#rtcHandler.setZrCoordToSend(coord);
-    }
-
-    setXyCoordToSend(coord) {
-        this.#rtcHandler.setXyCoordToSend(coord);
+    setCoord(coord, shouldEndSending) {
+        if (shouldEndSending) {
+            this.#rtcHandler.sendAndSetCoord(coord);
+        } else {
+            this.#rtcHandler.setCoordToSend(coord);
+        }   
     }
 }

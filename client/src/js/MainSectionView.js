@@ -58,10 +58,10 @@ export default class MainSectionView {
                 z: coords.inUI.y / r,
                 r: coords.inUI.x / r
             };
-            this.#mainSectionModel.setZrCoordToSend(zrCoordToSend);
+            this.#mainSectionModel.setCoord(zrCoordToSend);
         });
         this.#zrJoyStickUI.onend(() => {
-            this.#mainSectionModel.setZrCoordToSend({ z: 0, r: 0 });
+            this.#mainSectionModel.setCoord({ z: 0, r: 0 }, true);
         });
             
         this.#xyJoyStickUI.onmove(data => {
@@ -71,10 +71,10 @@ export default class MainSectionView {
                 x: coords.inUI.x / r,
                 y: coords.inUI.y / r
             };
-            this.#mainSectionModel.setZrCoordToSend(xyCoordToSend);
+            this.#mainSectionModel.setCoord(xyCoordToSend);
         });
         this.#xyJoyStickUI.onend(() => {
-            this.#mainSectionModel.setZrCoordToSend({ x: 0, y: 0 });
+            this.#mainSectionModel.setCoord({ x: 0, y: 0 }, true);
         });
 
         this.#$video.onloadedmetadata = () => {

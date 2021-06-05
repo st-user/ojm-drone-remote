@@ -24,8 +24,7 @@ export default class RTCHandler {
     #blockedByAnotherPrimaryPeerCount;
     #checkAndTryTimer;
     
-    #xyCoordToSend;
-    #zrCoordToSend;
+    #coordToSend;
 
     constructor(viewStateModel, startAreaModel) {
 
@@ -38,8 +37,7 @@ export default class RTCHandler {
         this.#dataChannelConnectingCount = 0;
         this.#blockedByAnotherPrimaryPeerCount = 0;
 
-        setTimeout(() => this.#doSendJoystickZr(), SEND_COORD_INTERVAL_MILLIS);
-        setTimeout(() => this.#doSendJoystickXy(), SEND_COORD_INTERVAL_MILLIS);
+        setTimeout(() => this.#doSendCoord(), SEND_COORD_INTERVAL_MILLIS);
     }
 
     init() {
@@ -387,57 +385,34 @@ export default class RTCHandler {
         });
     }
 
-    setZrCoordToSend(coord) {
-        this.#zrCoordToSend = coord;
+    setCoordToSend(coord) {
+        this.#coordToSend = coord;
     }
 
-    setXyCoordToSend(coord) {
-        this.#xyCoordToSend = coord;
+    sendAndSetCoord(toSend, toSet) {
+        this.#coordToSend = toSet;
+        this.#sendCoord(toSend);
     }
 
-    #doSendJoystickXy() {
-        this.#sendJoystickXyIfNecessary();
+    #doSendCoord() {
+        this.#sendCoordIfNecessary();
         setTimeout(() => {
-            this.#doSendJoystickXy();
+            this.#doSendCoord();
         }, SEND_COORD_INTERVAL_MILLIS);
     }
     
-    #sendJoystickXyIfNecessary() {
-        if (!this.#xyCoordToSend) {
+    #sendCoordIfNecessary() {
+        if (!this.#coordToSend) {
             return;
         }
-        this.#sendJoystickXy(this.#xyCoordToSend);
+        this.#sendCoord(this.#coordToSend);
     }
     
-    #sendJoystickXy(xy) {
-        this.#sendJoystickCommand(xy);
-    }
-    
-    #doSendJoystickZr() {
-        this.#sendJoystickZrIfNecessary();
-        setTimeout(() => {
-            this.#doSendJoystickZr();
-        }, SEND_COORD_INTERVAL_MILLIS);
-    }
-    
-    #sendJoystickZrIfNecessary() {
-        if (!this.#zrCoordToSend) {
-            return;
-        }
-        this.#sendJoystickZr(this.#zrCoordToSend);
-    }
-    
-    #sendJoystickZr(zr) {
-        this.#sendJoystickCommand(zr);
-    }
-    
-    #sendJoystickCommand(command) {
+    #sendCoord(command) {
         if (this.#dc) {
             this.#dc.send(JSON.stringify({ command }));
         } else {
             Logger.debug('DataChannel is not opened.', command);
         }
-    }  
-
-
+    }
 }
