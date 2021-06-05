@@ -18,7 +18,8 @@
   "author": "Tomoki Sato",
   "license": "MIT",
   "dependencies": {
-    "client-js-lib": "file:../../ojm-drone-client-js-lib"
+    "client-js-lib": "file:../../ojm-drone-client-js-lib",
+    "socket.io-client": "^4.1.2"
   },
   "devDependencies": {
     "@babel/core": "^7.14.3",
@@ -40,6 +41,7 @@
     "webpack": "^5.38.1",
     "webpack-cli": "^4.7.0",
     "webpack-license-plugin": "^4.1.2",
-    "webpack-merge": "^5.7.3"
+    "webpack-merge": "^5.7.3",
+    "webpack-remove-debug": "^0.1.0"
   }
 }

@@ -7,11 +7,9 @@ import { ZrJoyStickUI, XyJoyStickUI } from './joystick.js';
 
 export default class MainSectionView {
 
-
     #viewStateModel;
     #startAreaModel;
-    #mainSectionModel;
-    
+    #mainSectionModel;   
 
     #$messageArea;
     #$messageContent;
@@ -152,10 +150,8 @@ export default class MainSectionView {
     #showMessage(message) {
         clearTimeout(this.#messageTimer);
 
-
         DOM.block(this.#$messageArea);
-        this.#$messageContent.textContent = message;
-    
+        this.#$messageContent.textContent = message;   
         this.#messageTimer = setTimeout(() => DOM.none(this.#$messageArea), 10000);
     }
 

@@ -1,6 +1,7 @@
 import { CommonEventDispatcher } from 'client-js-lib';
 import { CustomEventNames } from './CustomEventNames.js';
 
+import SocketHandler from './SocketHandler.js';
 import Logger from './Logger.js';
 
 const TRY_CONNECTING_COUNT = 3;
@@ -14,7 +15,7 @@ export default class RTCHandler {
     #startAreaModel;
 
     #peerConnectionId;
-    #webSocket;
+    #socketHandler;
     #pc;
     #dc;
     #iceServerInfo;
@@ -59,81 +60,66 @@ export default class RTCHandler {
 
     setUpConnection(startKey) {
 
-        const wsProtocol = 0 <= location.protocol.indexOf('https') ? 'wss' : 'ws';
-        const isPrimary = this.#startAreaModel.isPrimary();
-        const url = `${wsProtocol}://${location.host}/remote?startKey=${startKey}&peerConnectionId=${this.#peerConnectionId}&isPrimary=${isPrimary}`;
-        const webSocket = new WebSocket(url);
-        this.#webSocket = webSocket;
-    
-        let onerror;
-        webSocket.onmessage = async event => {
-            const dataJson = JSON.parse(event.data);
-            const messageType = dataJson.messageType;
-    
-            switch(messageType) {
-            case 'iceServerInfo':
-                this.#iceServerInfo = dataJson.iceServerInfo;
-                // checkIfCanOffer();
+        this.#socketHandler = new SocketHandler('/remote', startKey, {
+            peerConnectionId: this.#peerConnectionId,
+            isPrimary: this.#startAreaModel.isPrimary()
+        });
+
+        this.#socketHandler.on('iceServerInfo', data => {
+            this.#iceServerInfo = data.iceServerInfo;
+        });
+
+        this.#socketHandler.on('canOffer', async data => {
+            switch(data.state) {
+            case 'EMPTY':
+                this.#blockedByAnotherPrimaryPeerCount = 0;
+                this.#closeRTCConnectionQuietly();
+                await this.startCreatingConnection();
                 break;
-            case 'canOffer':
-                switch(dataJson.state) {
-                case 'EMPTY':
-                    this.#blockedByAnotherPrimaryPeerCount = 0;
-                    this.#closeRTCConnectionQuietly();
-                    await this.startCreatingConnection();
-                    break;
-                case 'SAME':
-                    this.#blockedByAnotherPrimaryPeerCount = 0;
-                    Logger.warn('Can not offer.');
-                    break;
-                case 'EXIST':
-                    this.#blockedByAnotherPrimaryPeerCount++;
-                    if (TRY_PRIMARY_COUNT < this.#blockedByAnotherPrimaryPeerCount) {
-                        onerror = true;
-                        alert('Another peer is now controlling the drone. Please retry later or join as an audience.');
-                        webSocket.close();
-                    }
-                    break;
-                default:
-                    Logger.warn('Unexpected state', dataJson.state);
+            case 'SAME':
+                this.#blockedByAnotherPrimaryPeerCount = 0;
+                Logger.warn('Can not offer.');
+                break;
+            case 'EXIST':
+                this.#blockedByAnotherPrimaryPeerCount++;
+                if (TRY_PRIMARY_COUNT < this.#blockedByAnotherPrimaryPeerCount) {
+                    onerror = true;
+                    alert('Another peer is now controlling the drone. Please retry later or join as an audience.');
+                    this.#socketHandler.close();
                 }
-                break;
-            case 'answer':
-                Logger.debug('answer', dataJson.answer);
-                if (dataJson.err) {
-                    this.#closeRTCConnectionQuietly();
-                } else {
-                    this.#pc.setRemoteDescription(dataJson.answer);
-                }
-                break;
-            case 'ping':
-                webSocket.send(JSON.stringify({
-                    messageType: 'pong'
-                }));
                 break;
             default:
-                return;
+                Logger.warn('Unexpected state', data.state);
             }
-        };
-    
-        webSocket.onerror = () => {
+        });
+
+        this.#socketHandler.on('answer', data => {
+            Logger.debug('answer', data.answer);
+            if (data.err) {
+                this.#closeRTCConnectionQuietly();
+            } else {
+                this.#pc.setRemoteDescription(data.answer);
+            }
+        });
+
+        let onerror;
+        this.#socketHandler.on('connect_error', () => {
             alert('Failed to start connecting to the remote peer. The input code may be invalid.');
             onerror = true;
-            webSocket.close();
+            this.#socketHandler.close();
             this.#viewStateModel.toInit();
-        };
-    
-        webSocket.onopen = async () => {
-            Logger.debug('open!!');
-        };
-    
-        webSocket.onclose = () => {
+        });
+
+        this.#socketHandler.on('connect', () => {
+            Logger.debug('open.');
+        });
+
+        this.#socketHandler.on('disconnect', () => {
             if (!onerror) {
                 alert('Failed to open connection or connection was closed. Please retry.');
             }
             this.#viewStateModel.toInit();
-        };
-    
+        });
     }
 
     async checkAndTry() {
@@ -202,14 +188,15 @@ export default class RTCHandler {
     }
 
     #checkIfCanOffer() {
-        if (!this.#webSocket) {
+        if (!this.#socketHandler) {
             return;
         }
-        this.#webSocket.send(JSON.stringify({
+
+        this.#socketHandler.send('canOffer', {
             messageType: 'canOffer',
-            peerConnectionId: this.#peerConnectionId,
+            peerConnectionId: String(this.#peerConnectionId),
             isPrimary: this.#startAreaModel.isPrimary()
-        }));
+        });
     }
 
     async startCreatingConnection() {
@@ -336,14 +323,14 @@ export default class RTCHandler {
         await gather();
         const offerLocalDesc = pc.localDescription;
     
-        this.#webSocket.send(JSON.stringify({
+        this.#socketHandler.send('offer', {
             messageType: 'offer',
-            peerConnectionId: this.#peerConnectionId,
+            peerConnectionId: String(this.#peerConnectionId),
             offer: {
                 sdp: offerLocalDesc.sdp,
                 type: offerLocalDesc.type,
-            }
-        }));
+            }            
+        });
     }
 
 

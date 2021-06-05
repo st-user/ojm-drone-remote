@@ -4,7 +4,6 @@ import { CustomEventNames } from './CustomEventNames.js';
 
 export default class StartAreaView {
 
-
     #viewStateModel;
     #startAreaModel;
     #mainSectionModel;
@@ -48,8 +47,6 @@ export default class StartAreaView {
     }
 
     #render() {
-
-
 
         if (this.#viewStateModel.isInit()) {
 
