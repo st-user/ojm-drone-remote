@@ -17,6 +17,9 @@
   },
   "author": "Tomoki Sato",
   "license": "MIT",
+  "dependencies": {
+    "client-js-lib": "file:../../ojm-drone-client-js-lib"
+  },
   "devDependencies": {
     "@babel/core": "^7.14.3",
     "@babel/eslint-parser": "^7.14.4",
