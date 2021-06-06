@@ -1,7 +1,9 @@
-const logger = require('./Logger.js');
+const {
+    START_KEY_TIMEOUT_CHECK_INTERVAL,
+    START_KEY_TIMEOUT_MILLIS
+} = require('./Environment.js');
 
-const START_KEY_TIMEOUT_CHECK_INTERVAL = 10000;
-const START_KEY_TIMEOUT_MILLIS = 5 * 60 * 1000;
+const logger = require('./Logger.js');
 
 module.exports = class StartKeySweeper {
     

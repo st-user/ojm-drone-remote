@@ -1,4 +1,4 @@
-require('dotenv').config();
+const { PORT, TOKEN_HASH, NODE_ENV } = require('./components/Environment.js');
 
 const express = require('express');
 const crypto = require('crypto');
@@ -8,26 +8,22 @@ const RemoteServer = require('./components/RemoteServer.js');
 const LocalServer = require('./components/LocalServer.js');
 const StartKeySweeper = require('./components/StartKeySweeper.js');
 
-const PORT = process.env.PORT;
-const TOKEN_HASH = process.env.TOKEN_HASH;
-
 const app = express();
 
 app.use(express.json());
 app.use('/', express.static('dist'));
 app.use('/audience', express.static('dist'));
 
-
-logger.info(`Environment: ${process.env.NODE_ENV}`);
-
-
 const httpServer = app.listen(PORT, () => {
-    logger.info(`Listening on ${PORT}.`);
+    logger.info(`Listening on ${PORT}`);
 });
 
 const localServer = new LocalServer(httpServer);
 const remoteServer = new RemoteServer(httpServer);
 const startKeySweeper = new StartKeySweeper(localServer, remoteServer);
+
+
+logger.info(`Environment: ${NODE_ENV}`);
 
 
 const generateKey = () => {
@@ -42,7 +38,7 @@ app.get('/generateKey', async (req, res) => {
 
     const isTokenValid = bearerStr === 'bearer' && await verify(inputToken || '', TOKEN_HASH);
     if (!isTokenValid) {
-        logger.warn('Invalid token.');
+        logger.warn('Invalid token');
         res.status(401);
         res.setHeader('WWW-Authenticate', 'Bearer realm=""');
         res.send('');

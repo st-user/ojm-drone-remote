@@ -1,11 +1,13 @@
-const crypto = require('crypto');
-require('dotenv').config();
+const environment = require('./Environment.js');
+const SECRET = environment.isDevelopment ? undefined : environment.TURN_SECRET;
+const {
+    HOURS_TURN_CREDENTIAL_VALID,
+    STUN_URL,
+    TURN_URL
+} = environment;
 
-const isDevelopment = process.env.NODE_ENV === 'development';
-const SECRET = isDevelopment ? undefined : process.env.TURN_SECRET;
-const HOURS_TURN_CREDENTIAL_VALID = process.env.HOURS_TURN_CREDENTIAL_VALID;
-const STUN_URL = process.env.STUN_URL;
-const TURN_URL = process.env.TURN_URL;
+const crypto = require('crypto');
+
 
 const createHash = token => {
 

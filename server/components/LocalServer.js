@@ -1,18 +1,28 @@
+const {
+    MAX_LOCAL_CLIENT_COUNT,
+    MAX_LOCAL_CLIENT_HTTP_BUF_SIZE,
+    LOCAL_CLIENT_PING_INTERVAL,
+    TICKET_EXPIRES_IN
+} = require('./Environment.js');
+
 const WebSocket = require('ws');
 const crypto = require('crypto');
+
 const logger = require('./Logger.js');
 const MessageHandlerServer = require('./MessageHandlerServer.js');
 const { generateICEServerInfo } = require('./token.js');
 
-const LOCAL_SERVER_PING_INTERVAL = 5000;
-const TICKET_EXPIRES_IN = 30000;
 
 module.exports = class LocalServer extends MessageHandlerServer {
 
     constructor(httpServer) {
         super();
 
-        const server = new WebSocket.Server({ noServer: true });
+        const server = new WebSocket.Server({ 
+            noServer: true,
+            maxPayload: MAX_LOCAL_CLIENT_HTTP_BUF_SIZE,
+            clientTracking: true
+        });
 
         this._startKeyLocalClientMap = new Map();
         this._tickets = new Map();
@@ -24,6 +34,14 @@ module.exports = class LocalServer extends MessageHandlerServer {
         
             if (pathname === '/signaling') {
         
+                if (MAX_LOCAL_CLIENT_COUNT <= server.clients.size) {
+                    const msg = `Over rate limit: ${server.clients.size}`;
+                    logger.warn(msg);
+                    socket.write('HTTP/1.1 503 Service Unavailable\r\n\r\n');
+                    socket.destroy();
+                    return;
+                }
+
                 const ticket = url.searchParams.get('ticket');
                 const startKey = this._tickets.get(ticket);
                 this._tickets.delete(ticket);
@@ -58,7 +76,7 @@ module.exports = class LocalServer extends MessageHandlerServer {
             };
             const doPing = () => {
                 ping();
-                pingTimer = setTimeout(doPing, LOCAL_SERVER_PING_INTERVAL);
+                pingTimer = setTimeout(doPing, LOCAL_CLIENT_PING_INTERVAL);
             };
             doPing();
 
@@ -95,7 +113,7 @@ module.exports = class LocalServer extends MessageHandlerServer {
         setTimeout(() => {
             if (this._tickets.has(ticket)) {
                 this._tickets.delete(ticket);
-                logger.warn(`A ticket for startKey has expired ${ticket.slice(0 ,3)}...`);
+                logger.warn(`A ticket for startKey has expired ${ticket.slice(0, 3)}...`);
             } 
         }, TICKET_EXPIRES_IN);
 
