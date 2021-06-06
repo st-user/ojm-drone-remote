@@ -15,13 +15,13 @@ module.exports = class StartKeySweeper {
             for (const [startKey, timestamp] of this._startKeyTimestampMap.entries()) {
 
                 if(localServer.isStartKeyUsed(startKey) || remoteServer.isStartKeyUsed(startKey)) {
-                    logger.debug('start key is used');
+                    logger.debug('StartKey is used');
                     this._startKeyTimestampMap.set(startKey, current);
                     continue;
                 }
 
                 if (current - timestamp < START_KEY_TIMEOUT_MILLIS) {
-                    logger.debug('start key is not timeout');
+                    logger.debug('StartKey is not timeout');
                     continue;
                 }
 
