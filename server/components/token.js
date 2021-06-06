@@ -4,6 +4,8 @@ require('dotenv').config();
 const isDevelopment = process.env.NODE_ENV === 'development';
 const SECRET = isDevelopment ? undefined : process.env.TURN_SECRET;
 const HOURS_TURN_CREDENTIAL_VALID = process.env.HOURS_TURN_CREDENTIAL_VALID;
+const STUN_URL = process.env.STUN_URL;
+const TURN_URL = process.env.TURN_URL;
 
 const createHash = token => {
 
@@ -79,10 +81,22 @@ const generateTurnCredentials = name => {
     };
 };
 
+const generateICEServerInfo = () => {
+    const credentials = generateTurnCredentials(crypto.randomBytes(8).toString('hex'));
+    const iceServerInfo = !credentials ? undefined : {
+        stun: STUN_URL,
+        turn: TURN_URL,
+        credentials
+    };
+
+    return iceServerInfo;
+};
+
 module.exports = {
     createHash,
     generateToken,
     generateTokenByToken,
     verify,
-    generateTurnCredentials
+    generateTurnCredentials,
+    generateICEServerInfo
 };

@@ -1,25 +1,26 @@
 const logger = require('./Logger.js');
-
+const MessageHandlerServer = require('./MessageHandlerServer.js');
+const { generateICEServerInfo } = require('./token.js');
 
 const _parseIntOrDefault = (value, defaultValue) => !value? defaultValue : parseInt(value, 10);
 const MAX_REMOTE_CLIENT_COUNT = _parseIntOrDefault(process.env.MAX_REMOTE_CLIENT_COUNT, 1000);
 const MAX_HTTP_BUF_SIZE = _parseIntOrDefault(process.env.MAX_HTTP_BUF_SIZE, 1024 * 1024);
 const REMOTE_TIMEOUT_MILLIS = _parseIntOrDefault(process.env.PRIMARY_TIMEOUT_SEC, 10) * 1000;
-const REMOTE_TIMEOUT_CHECK_INTERVAL_MILLIS = 1000;
+const REMOTE_SERVER_PING_INTERVAL = 3000;
 
-module.exports = class RemoteServer {  
+module.exports = class RemoteServer extends MessageHandlerServer {  
 
     constructor(server) {
+        super();
+
         const io = require('socket.io')(server, {
             path: '/remote',
             serveClient: false,
             pingTimeout: REMOTE_TIMEOUT_MILLIS,
-            pingInterval: REMOTE_TIMEOUT_CHECK_INTERVAL_MILLIS,
+            pingInterval: REMOTE_SERVER_PING_INTERVAL,
             maxHttpBufferSize: MAX_HTTP_BUF_SIZE
         });
-        this._io = io;
         this._startKeyRemoteClientMap = new Map();
-        this._messageHandlersMap = new Map();
 
         io.use((socket, next) => {
 
@@ -65,6 +66,13 @@ module.exports = class RemoteServer {
 
             next();
         });
+
+        io.on('connection', socket => {
+            const iceServerInfo = generateICEServerInfo();
+            socket.emit('iceServerInfo', {
+                iceServerInfo
+            });
+        });
     }
 
     setStartKeyIfAbsent(startKey) {
@@ -85,27 +93,6 @@ module.exports = class RemoteServer {
             return;
         }
         socket.emit(messageType, data);
-    }
-
-    on(eventName, handler) {
-        const _setHandler = _eventName => {
-            let handlers = this._messageHandlersMap.get(_eventName);
-            if (!handlers) {
-                handlers = [];
-                this._messageHandlersMap.set(_eventName, handlers);
-            }
-            handlers.push(handler);
-        };
-        if (Array.isArray(eventName)) {
-            eventName.forEach(_setHandler);
-        } else {
-            _setHandler(eventName);
-        }
-
-    }
-
-    onconnection(handler) {
-        this._io.on('connection', handler);
     }
 
 };
