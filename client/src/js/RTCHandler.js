@@ -1,3 +1,5 @@
+import { v4 as uuidv4 } from 'uuid';
+
 import { CommonEventDispatcher } from 'client-js-lib';
 import { CustomEventNames } from './CustomEventNames.js';
 
@@ -32,7 +34,8 @@ export default class RTCHandler {
         this.#viewStateModel = viewStateModel;
         this.#startAreaModel = startAreaModel;
 
-        this.#peerConnectionId = Date.now();
+        // TODO rename to peerId
+        this.#peerConnectionId = uuidv4();
 
         this.#newOrConnectingCount = 0;
         this.#dataChannelConnectingCount = 0;
@@ -194,7 +197,7 @@ export default class RTCHandler {
 
         this.#socketHandler.send('canOffer', {
             messageType: 'canOffer',
-            peerConnectionId: String(this.#peerConnectionId),
+            peerConnectionId: this.#peerConnectionId,
             isPrimary: this.#startAreaModel.isPrimary()
         });
     }
@@ -325,7 +328,7 @@ export default class RTCHandler {
     
         this.#socketHandler.send('offer', {
             messageType: 'offer',
-            peerConnectionId: String(this.#peerConnectionId),
+            peerConnectionId: this.#peerConnectionId,
             offer: {
                 sdp: offerLocalDesc.sdp,
                 type: offerLocalDesc.type,
