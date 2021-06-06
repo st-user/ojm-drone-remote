@@ -2,6 +2,7 @@ const {
     MAX_LOCAL_CLIENT_COUNT,
     MAX_LOCAL_CLIENT_HTTP_BUF_SIZE,
     LOCAL_CLIENT_PING_INTERVAL,
+    LOCAL_CLIENT_TIMEOUT_MILLIS,
     TICKET_EXPIRES_IN
 } = require('./Environment.js');
 
@@ -12,6 +13,59 @@ const logger = require('./Logger.js');
 const MessageHandlerServer = require('./MessageHandlerServer.js');
 const { generateICEServerInfo } = require('./token.js');
 
+
+class RemoteConnectionManager {
+
+    constructor(ws) {
+        this.ws = ws;
+    }
+
+    start() {
+        clearTimeout(this.timer);
+
+        this.timer = setTimeout(() => {
+            this._ping();
+            this.start();
+        }, LOCAL_CLIENT_PING_INTERVAL);
+    }
+
+    consumePong() {
+        clearTimeout(this.stopTimer);
+
+        this.stopTimer = setTimeout(() => {
+            this.stop();
+        }, LOCAL_CLIENT_TIMEOUT_MILLIS);
+    }
+
+    stop() {
+        this.clear();
+
+        const startKey = this.ws.__startKey;
+        logger.info(`Close the peer ${startKey.slice(0, 5)}...`);
+
+        if (this.ws.readyState !== WebSocket.CLOSED) {
+            try {
+                this.ws.close();
+            } catch(e) {
+                logger.error(e);
+            }
+            
+        }
+    }
+
+    clear() {
+        clearTimeout(this.timer);
+        clearTimeout(this.stopTimer);
+    }
+
+    _ping() {
+        if (this.ws.readyState === WebSocket.OPEN) {
+            this.ws.send(JSON.stringify({
+                messageType: 'ping'
+            }));
+        }
+    }
+}
 
 module.exports = class LocalServer extends MessageHandlerServer {
 
@@ -66,30 +120,29 @@ module.exports = class LocalServer extends MessageHandlerServer {
             this._startKeyLocalClientMap.set(startKey, ws);
             ws.__startKey = startKey;
         
-            let pingTimer;
-            const ping = () => {
-                if (ws.readyState === WebSocket.OPEN) {
-                    ws.send(JSON.stringify({
-                        messageType: 'ping'
-                    }));
-                }
-            };
-            const doPing = () => {
-                ping();
-                pingTimer = setTimeout(doPing, LOCAL_CLIENT_PING_INTERVAL);
-            };
-            doPing();
+            const remoteConnectionManager = new RemoteConnectionManager(ws);
 
             for (const [eventName, handlers] of this._messageHandlersMap.entries()) {
                 ws.on(eventName, msg => {
-                    handlers.forEach(h => h.call(ws, ws, msg));
+                    if (eventName === 'message') {
+                        const dataJson = JSON.parse(msg);
+                        if (dataJson.messageType === 'pong') {
+                            remoteConnectionManager.consumePong();                            
+                        } else {
+                            handlers.forEach(h => h.call(ws, ws, dataJson));
+                        }
+                    } else {
+                        handlers.forEach(h => h.call(ws, ws, msg));
+                    }
+
                 });
             }
 
             ws.on('close', () => {
-                clearTimeout(pingTimer);
+                remoteConnectionManager.clear();
             });      
         
+            remoteConnectionManager.start();
             const iceServerInfo = generateICEServerInfo();
             ws.send(JSON.stringify({ 
                 messageType: 'iceServerInfo',

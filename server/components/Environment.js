@@ -22,6 +22,7 @@ module.exports = {
     MAX_LOCAL_CLIENT_COUNT: _parseIntOrDefault(process.env.MAX_REMOTE_CLIENT_COUNT, 1000),
     MAX_LOCAL_CLIENT_HTTP_BUF_SIZE: _parseIntOrDefault(process.env.MAX_HTTP_BUF_SIZE, 1024 * 1024),
     LOCAL_CLIENT_PING_INTERVAL: _parseIntOrDefault(process.env.LOCAL_CLIENT_PING_INTERVAL, 5 * 1000),
+    LOCAL_CLIENT_TIMEOUT_MILLIS: _parseIntOrDefault(process.env.LOCAL_CLIENT_TIMEOUT_MILLIS, 10 * 1000),
     TICKET_EXPIRES_IN: _parseIntOrDefault(process.env.TICKET_EXPIRES_IN, 10 * 1000),
 
     MAX_REMOTE_CLIENT_COUNT: _parseIntOrDefault(process.env.MAX_REMOTE_CLIENT_COUNT, 1000),

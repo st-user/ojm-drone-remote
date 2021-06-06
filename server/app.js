@@ -70,14 +70,10 @@ app.post('/ticket', (req, res) => {
     res.json({ ticket });
 });
 
-localServer.on('message', (ws, data) => {
+localServer.on('message', (ws, dataJson) => {
 
-    const dataJson = JSON.parse(data);
+
     const messageType = dataJson.messageType;
-
-    if (messageType === 'pong') {
-        return;
-    }
 
     const peerConnectionId = dataJson.peerConnectionId;
     const startKey = ws.__startKey;
