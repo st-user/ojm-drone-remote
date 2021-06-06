@@ -6,6 +6,7 @@ const { verify } = require('./components/token.js');
 const logger = require('./components/Logger.js');
 const RemoteServer = require('./components/RemoteServer.js');
 const LocalServer = require('./components/LocalServer.js');
+const StartKeySweeper = require('./components/StartKeySweeper.js');
 
 const PORT = process.env.PORT;
 const TOKEN_HASH = process.env.TOKEN_HASH;
@@ -26,6 +27,7 @@ const httpServer = app.listen(PORT, () => {
 
 const localServer = new LocalServer(httpServer);
 const remoteServer = new RemoteServer(httpServer);
+const startKeySweeper = new StartKeySweeper(localServer, remoteServer);
 
 
 const generateKey = () => {
@@ -51,6 +53,7 @@ app.get('/generateKey', async (req, res) => {
  
     localServer.setStartKey(startKey);
     remoteServer.setStartKeyIfAbsent(startKey);
+    startKeySweeper.setStartKey(startKey);
 
     res.json({ startKey });
 });

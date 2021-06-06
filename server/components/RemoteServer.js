@@ -95,4 +95,31 @@ module.exports = class RemoteServer extends MessageHandlerServer {
         socket.emit(messageType, data);
     }
 
+    isStartKeyUsed(startKey) {
+        const sockets = this._startKeyRemoteClientMap.get(startKey);
+        if (!sockets || sockets.size === 0) {
+            return false;
+        }
+        for (const socket of sockets.values()) {
+            if (socket.connected) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    remove(startKey) {
+        const sockets = this._startKeyRemoteClientMap.get(startKey);
+        if (!sockets) {
+            return;
+        }
+        for (const socket of sockets.values()) {
+            try {
+                socket.close();
+            } catch(e) {
+                logger.error(e);
+            }
+        }
+        this._startKeyRemoteClientMap.delete(startKey);
+    }
 };

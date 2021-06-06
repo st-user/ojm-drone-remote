@@ -108,6 +108,24 @@ module.exports = class LocalServer extends MessageHandlerServer {
         });        
     }
 
+
+    isStartKeyUsed(startKey) {
+        const localClient = this._startKeyLocalClientMap.get(startKey);
+        return localClient && localClient.readyState === WebSocket.OPEN;
+    }
+
+    remove(startKey) {
+        const localClient = this._startKeyLocalClientMap.get(startKey);
+        if (!localClient) {
+            return;
+        }
+        try {
+            localClient.close();
+        } catch(e) {
+            logger.error(e);
+        }
+    }
+
     _doWithLocalClient(startKey, handler) {
         const localClient = this._startKeyLocalClientMap.get(startKey);
 
