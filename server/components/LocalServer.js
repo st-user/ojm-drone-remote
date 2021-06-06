@@ -29,6 +29,8 @@ module.exports = class LocalServer extends MessageHandlerServer {
                 this._tickets.delete(ticket);
 
                 if(!this._startKeyLocalClientMap.has(startKey)) {
+                    const _startKey = !startKey ? '' : startKey;
+                    logger.warn(`Invalid startKey: ${_startKey.slice(0, 5)}...`);
                     socket.write('HTTP/1.1 401 Unauthorized\r\n\r\n');
                     socket.destroy();
                     return;
@@ -42,13 +44,7 @@ module.exports = class LocalServer extends MessageHandlerServer {
         });
 
         server.on('connection', (ws, _request, startKey) => {
-       
-            if (!this._startKeyLocalClientMap.has(startKey)) {
-                logger.warn(`Invalid startKey: ${startKey.slice(0, 5)}...`);
-                ws.close();
-                return;
-            }
-        
+              
             this._startKeyLocalClientMap.set(startKey, ws);
             ws.__startKey = startKey;
         
