@@ -12,6 +12,7 @@ const TOKEN_HASH = process.env.TOKEN_HASH;
 
 const app = express();
 
+app.use(express.json());
 app.use('/', express.static('dist'));
 app.use('/audience', express.static('dist'));
 
@@ -52,6 +53,22 @@ app.get('/generateKey', async (req, res) => {
     remoteServer.setStartKeyIfAbsent(startKey);
 
     res.json({ startKey });
+});
+
+app.post('/ticket', (req, res) => {
+
+    const { startKey } = req.body;
+
+    const ticket = localServer.generateTicket(startKey);
+    if (!ticket) {
+        const _startKey = !startKey ? '' : startKey;
+        logger.warn(`Invalid startKey: ${_startKey.slice(0, 5)}...`);
+        res.status(401);
+        res.send('Invalid startKey');
+        return;
+    }
+
+    res.json({ ticket });
 });
 
 localServer.on('message', (ws, data) => {

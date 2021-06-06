@@ -1,10 +1,11 @@
 const WebSocket = require('ws');
-
+const crypto = require('crypto');
 const logger = require('./Logger.js');
 const MessageHandlerServer = require('./MessageHandlerServer.js');
 const { generateICEServerInfo } = require('./token.js');
 
 const LOCAL_SERVER_PING_INTERVAL = 5000;
+const TICKET_EXPIRES_IN = 30000;
 
 module.exports = class LocalServer extends MessageHandlerServer {
 
@@ -14,6 +15,7 @@ module.exports = class LocalServer extends MessageHandlerServer {
         const server = new WebSocket.Server({ noServer: true });
 
         this._startKeyLocalClientMap = new Map();
+        this._tickets = new Map();
 
         httpServer.on('upgrade', (request, socket, head) => {
 
@@ -22,8 +24,10 @@ module.exports = class LocalServer extends MessageHandlerServer {
         
             if (pathname === '/signaling') {
         
-                const startKey = url.searchParams.get('startKey');
-        
+                const ticket = url.searchParams.get('ticket');
+                const startKey = this._tickets.get(ticket);
+                this._tickets.delete(ticket);
+
                 if(!this._startKeyLocalClientMap.has(startKey)) {
                     socket.write('HTTP/1.1 401 Unauthorized\r\n\r\n');
                     socket.destroy();
@@ -31,17 +35,14 @@ module.exports = class LocalServer extends MessageHandlerServer {
                 }
         
                 server.handleUpgrade(request, socket, head, ws => {
-                    server.emit('connection', ws, request);
+                    server.emit('connection', ws, request, startKey);
                 });
             }
         
         });
 
-        server.on('connection', (ws, request) => {
-
-            const url = new URL( request.url, 'http://localhost');
-            const startKey = url.searchParams.get('startKey');
-        
+        server.on('connection', (ws, _request, startKey) => {
+       
             if (!this._startKeyLocalClientMap.has(startKey)) {
                 logger.warn(`Invalid startKey: ${startKey.slice(0, 5)}...`);
                 ws.close();
@@ -85,6 +86,24 @@ module.exports = class LocalServer extends MessageHandlerServer {
 
     setStartKey(startKey) {
         this._startKeyLocalClientMap.set(startKey, {});
+    }
+
+    generateTicket(startKey) {
+
+        if (!this._startKeyLocalClientMap.has(startKey)) {
+            return undefined;
+        }
+
+        const ticket = crypto.randomBytes(8).toString('hex');
+        this._tickets.set(ticket, startKey);
+        setTimeout(() => {
+            if (this._tickets.has(ticket)) {
+                this._tickets.delete(ticket);
+                logger.warn(`A ticket for startKey has expired ${ticket.slice(0 ,3)}...`);
+            } 
+        }, TICKET_EXPIRES_IN);
+
+        return ticket;
     }
 
     send(startKey, data) {
