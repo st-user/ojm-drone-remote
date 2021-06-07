@@ -6,7 +6,7 @@ module.exports = merge(common, {
     module: {
         rules: [
             {
-                test: /\.js$/,
+                test: /^(?!.*Logger).+\.js$/,
                 loader: 'webpack-remove-debug'
             }
         ]
