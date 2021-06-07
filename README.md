@@ -34,6 +34,9 @@ This 'ojm-drone-remote' is used together with ['ojm-drone-local'](https://github
     - [Tello/Tello EDU](https://www.ryzerobotics.com/jp/tello)
 
 
+Mac OS is recommended. Some npm scripts don't work on Windows.
+
+
 # How to install
 
 After installing the applications using the commands below, you may need to edit the environment variables in `.env` files according to your environment.
@@ -46,6 +49,7 @@ If you want to just work through the 'How to use' below, you don't have to chang
 
 ### macOS
 ```
+git clone https://github.com/st-user/ojm-drone-client-js-lib.git
 git clone https://github.com/st-user/ojm-drone-remote.git
 cd ojm-drone-remote
 cd server
@@ -58,6 +62,7 @@ npm install
 
 ### Windows 10
 ```
+git clone https://github.com/st-user/ojm-drone-client-js-lib.git
 git clone https://github.com/st-user/ojm-drone-remote.git
 cd ojm-drone-remote
 cd server
@@ -102,10 +107,9 @@ Open your terminal, move to the project's root directory and run:
 
 ```
 cd client
-npm run clean
 npm run build-css
 npm run build:test
-cd ../ # 'cd ..\' on windows
+cd ../
 cd server
 node app.js
 ```
