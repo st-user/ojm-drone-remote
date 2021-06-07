@@ -48,16 +48,24 @@ If you want to just work through the 'How to use' below, you don't have to chang
 ```
 git clone https://github.com/st-user/ojm-drone-remote.git
 cd ojm-drone-remote
+cd server
 npm install
 cp template.env .env
+cd ../
+cd client
+npm install
 ```
 
 ### Windows 10
 ```
 git clone https://github.com/st-user/ojm-drone-remote.git
 cd ojm-drone-remote
+cd server
 npm install
 copy template.env .env
+cd ..\
+cd client
+npm install
 ```
 
 ## ojm-drone-local
@@ -93,6 +101,12 @@ For more infromation, please see the documentations on each variable in `.env` f
 Open your terminal, move to the project's root directory and run:
 
 ```
+cd client
+npm run clean
+npm run build-css
+npm run build:test
+cd ../ # 'cd ..\' on windows
+cd server
 node app.js
 ```
 
