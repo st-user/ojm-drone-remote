@@ -16,6 +16,10 @@ export default class SocketHandler {
         });
     }
 
+    connect() {
+        this.#socket.connect();
+    }
+
     send(eventName, value) {
         this.#socket.emit(eventName, value);
     }

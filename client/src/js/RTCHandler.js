@@ -11,6 +11,9 @@ const TRY_PRIMARY_COUNT = 10;
 const TRY_INTERVAL_MILLIS = 1000;
 const SEND_COORD_INTERVAL_MILLIS = 100;
 
+const MAx_RETRY_COUNT_ON_SOC_DISCONNECT = 10;
+const RETRY_INTERVAL_MILLIS_ON_SOC_DISCONNECT = 1000;
+
 export default class RTCHandler {
 
     #viewStateModel;
@@ -26,6 +29,9 @@ export default class RTCHandler {
     #dataChannelConnectingCount;
     #blockedByAnotherPrimaryPeerCount;
     #checkAndTryTimer;
+
+    #retryCountOnSocDisconnect;
+    #retryTimerOnSocDisconnect;
     
     #coordToSend;
 
@@ -41,6 +47,8 @@ export default class RTCHandler {
         this.#dataChannelConnectingCount = 0;
         this.#blockedByAnotherPrimaryPeerCount = 0;
 
+        this.#retryCountOnSocDisconnect = 0;
+
         setTimeout(() => this.#doSendCoord(), SEND_COORD_INTERVAL_MILLIS);
     }
 
@@ -50,6 +58,9 @@ export default class RTCHandler {
         this.#newOrConnectingCount = 0;
         this.#dataChannelConnectingCount = 0;
         this.#blockedByAnotherPrimaryPeerCount = 0;
+
+        this.#retryCountOnSocDisconnect = 0;
+        clearTimeout(this.#retryTimerOnSocDisconnect);
 
         this.#closeRTCConnectionQuietly();        
     }
@@ -108,6 +119,9 @@ export default class RTCHandler {
 
         let onerror;
         this.#socketHandler.on('connect_error', () => {
+            if (0 < this.#retryCountOnSocDisconnect) {
+                return;
+            }
             alert('Failed to start connecting to the remote peer. The input code may be invalid.');
             onerror = true;
             this.#socketHandler.close();
@@ -116,11 +130,35 @@ export default class RTCHandler {
 
         this.#socketHandler.on('connect', () => {
             Logger.debug('open.');
+
+            this.#retryCountOnSocDisconnect = 0;
+            clearTimeout(this.#retryTimerOnSocDisconnect);
+    
         });
 
-        this.#socketHandler.on('disconnect', () => {
+        const disconnectMsg = 'Failed to open connection or connection was closed. Please retry.';
+        const retry = () => {
+
+            Logger.info(`trying to recover websocket connection ${this.#retryCountOnSocDisconnect}/${MAx_RETRY_COUNT_ON_SOC_DISCONNECT}.`);
+            if (MAx_RETRY_COUNT_ON_SOC_DISCONNECT < this.#retryCountOnSocDisconnect) {
+                alert(disconnectMsg);
+                this.#viewStateModel.toInit();
+                return;
+            }
+            this.#retryCountOnSocDisconnect++;
+            this.#socketHandler.connect();
+
+            this.#retryTimerOnSocDisconnect = setTimeout(retry, RETRY_INTERVAL_MILLIS_ON_SOC_DISCONNECT);
+        };
+
+        this.#socketHandler.on('disconnect', reason => {
+            if (reason !== 'io client disconnect') {
+                retry();
+                return;
+            }
+
             if (!onerror) {
-                alert('Failed to open connection or connection was closed. Please retry.');
+                alert(disconnectMsg);
             }
             this.#viewStateModel.toInit();
         });
