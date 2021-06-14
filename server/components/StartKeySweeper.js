@@ -4,6 +4,7 @@ const {
 } = require('./Environment.js');
 
 const logger = require('./Logger.js');
+const storage = require('./Storage.js');
 
 module.exports = class StartKeySweeper {
     
@@ -11,14 +12,14 @@ module.exports = class StartKeySweeper {
     constructor(localServer, remoteServer) {
         this._startKeyTimestampMap = new Map();
         
-        setInterval(() => {
+        setInterval(async () => {
 
             const current = Date.now();
             for (const [startKey, timestamp] of this._startKeyTimestampMap.entries()) {
 
                 if(localServer.isStartKeyUsed(startKey) || remoteServer.isStartKeyUsed(startKey)) {
                     logger.debug('StartKey is used');
-                    this._startKeyTimestampMap.set(startKey, current);
+                    await this.setStartKeyWithTimestamp(startKey, current);
                     continue;
                 }
 
@@ -29,7 +30,7 @@ module.exports = class StartKeySweeper {
 
                 localServer.remove(startKey);
                 remoteServer.remove(startKey);
-                this._startKeyTimestampMap.delete(startKey);
+                await this._removeStartKey(startKey);
 
                 logger.info(`StartKey timeout ${startKey.slice(0, 5)}...`);
             }
@@ -39,7 +40,17 @@ module.exports = class StartKeySweeper {
         }, START_KEY_TIMEOUT_CHECK_INTERVAL);
     }    
 
-    setStartKey(startKey) {
-        this._startKeyTimestampMap.set(startKey, Date.now());
+    async setStartKey(startKey) {
+        await this.setStartKeyWithTimestamp(startKey, Date.now());
+    }
+
+    async setStartKeyWithTimestamp(startKey, timestamp) {
+        this._startKeyTimestampMap.set(startKey, timestamp);
+        await storage.updateStartKey(startKey, timestamp);
+    }
+
+    async _removeStartKey(startKey) {
+        this._startKeyTimestampMap.delete(startKey);
+        await storage.deleteStartKey(startKey);
     }
 };

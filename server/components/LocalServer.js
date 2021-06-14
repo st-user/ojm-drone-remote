@@ -187,7 +187,7 @@ module.exports = class LocalServer extends MessageHandlerServer {
 
     remove(startKey) {
         const localClient = this._startKeyLocalClientMap.get(startKey);
-        if (!localClient) {
+        if (!localClient || !localClient.close) {
             return;
         }
         try {

@@ -1,13 +1,13 @@
 const { PORT, NODE_ENV } = require('./components/Environment.js');
 
 const express = require('express');
-const crypto = require('crypto');
+const { v4: uuidv4 } = require('uuid');
 const { verify } = require('./components/token.js');
 const logger = require('./components/Logger.js');
 const RemoteServer = require('./components/RemoteServer.js');
 const LocalServer = require('./components/LocalServer.js');
 const StartKeySweeper = require('./components/StartKeySweeper.js');
-const Storage = require('./components/Storage.js');
+const storage = require('./components/Storage.js');
 
 const app = express();
 
@@ -15,22 +15,30 @@ app.use(express.json());
 app.use('/', express.static('dist'));
 app.use('/audience', express.static('dist'));
 
-const httpServer = app.listen(PORT, () => {
+const httpServer = app.listen(PORT, async () => {
+    await initApp();
     logger.info(`Listening on ${PORT}`);
 });
 
 const localServer = new LocalServer(httpServer);
 const remoteServer = new RemoteServer(httpServer);
 const startKeySweeper = new StartKeySweeper(localServer, remoteServer);
-const storage = new Storage();
 
 logger.info(`Environment: ${NODE_ENV}`);
 
+async function initApp() {
+    const startKeys = await storage.getStartKeys();
+    logger.info(`Restores ${startKeys.length} startKey(s)`);
+    for (const { startKey, timestamp } of startKeys) {
+        localServer.setStartKey(startKey);
+        remoteServer.setStartKeyIfAbsent(startKey);
+        await startKeySweeper.setStartKeyWithTimestamp(startKey, timestamp);
+    }
+}
 
-const generateKey = () => {
-    const buff = crypto.randomBytes(16);
-    return buff.toString('hex');
-};
+function generateKey() {
+    return uuidv4();
+}
 
 app.get('/generateKey', async (req, res) => {
 
