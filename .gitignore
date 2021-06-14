@@ -4,6 +4,7 @@ node_modules
 
 server/dist/
 server/dist-discard/
+server/keys/
 client/dist/
 client/dist-discard/
 node_modules/

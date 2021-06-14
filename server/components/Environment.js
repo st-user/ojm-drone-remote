@@ -12,7 +12,6 @@ module.exports = {
     PORT: _parseIntOrDefault(process.env.PORT, 8080),
     NODE_ENV: process.env.NODE_ENV,
     LOG_LEVEL: process.env.LOG_LEVEL || 'info',
-    TOKEN_HASH: process.env.TOKEN_HASH,
 
     TURN_SECRET: process.env.TURN_SECRET,
     HOURS_TURN_CREDENTIAL_VALID: process.env.HOURS_TURN_CREDENTIAL_VALID,
@@ -31,5 +30,8 @@ module.exports = {
     REMOTE_CLIENT_PING_INTERVAL: _parseIntOrDefault(process.env.REMOTE_CLIENT_PING_INTERVAL, 3 * 1000),
 
     START_KEY_TIMEOUT_CHECK_INTERVAL: _parseIntOrDefault(process.env.START_KEY_TIMEOUT_CHECK_INTERVAL, 10 * 1000),
-    START_KEY_TIMEOUT_MILLIS: _parseIntOrDefault(process.env.START_KEY_TIMEOUT_MILLIS, 5 * 60 * 1000)
+    START_KEY_TIMEOUT_MILLIS: _parseIntOrDefault(process.env.START_KEY_TIMEOUT_MILLIS, 5 * 60 * 1000),
+
+    STORAGE_PROJEDT_ID: process.env.STORAGE_PROJEDT_ID,
+    STORAGE_KEY_PATH: process.env.STORAGE_KEY_PATH,
 };

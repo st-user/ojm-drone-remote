@@ -1,4 +1,4 @@
-const { PORT, TOKEN_HASH, NODE_ENV } = require('./components/Environment.js');
+const { PORT, NODE_ENV } = require('./components/Environment.js');
 
 const express = require('express');
 const crypto = require('crypto');
@@ -7,6 +7,7 @@ const logger = require('./components/Logger.js');
 const RemoteServer = require('./components/RemoteServer.js');
 const LocalServer = require('./components/LocalServer.js');
 const StartKeySweeper = require('./components/StartKeySweeper.js');
+const Storage = require('./components/Storage.js');
 
 const app = express();
 
@@ -21,7 +22,7 @@ const httpServer = app.listen(PORT, () => {
 const localServer = new LocalServer(httpServer);
 const remoteServer = new RemoteServer(httpServer);
 const startKeySweeper = new StartKeySweeper(localServer, remoteServer);
-
+const storage = new Storage();
 
 logger.info(`Environment: ${NODE_ENV}`);
 
@@ -36,7 +37,8 @@ app.get('/generateKey', async (req, res) => {
     const bearerToken = req.headers['authorization'] || '';
     const [ bearerStr, inputToken ] = bearerToken.split(' ');
 
-    const isTokenValid = bearerStr === 'bearer' && await verify(inputToken || '', TOKEN_HASH);
+    const tokens = await storage.getAccessTokens();
+    const isTokenValid = bearerStr === 'bearer' && await verify(inputToken || '', tokens);
     if (!isTokenValid) {
         logger.warn('Invalid token');
         res.status(401);

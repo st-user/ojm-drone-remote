@@ -81,6 +81,7 @@ export default class RTCHandler {
                 break;
             case 'SAME':
                 this.#blockedByAnotherPrimaryPeerCount = 0;
+                this.#closeRTCConnectionQuietly();
                 Logger.warn('Can not offer.');
                 break;
             case 'EXIST':
