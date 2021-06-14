@@ -42,23 +42,33 @@ const generateTokenByToken = async token => {
     return { token, hash };
 };
 
-const verify = (inputToken, hash) => {
+const verify = async (inputToken, hashes) => {
 
-    return new Promise((resolve, reject) => {
+    
+    const check = hash => {
+        return new Promise(resolve => {
 
-        const [salt, key] = hash.split(':');
-
-        crypto.scrypt(inputToken, salt, 64, (error, derivedKey) => {
-
-            if (error) {
-                reject(error);
-            } else {
-                resolve(key === derivedKey.toString('hex'));
-            }
+            const [salt, key] = hash.split(':');
+    
+            crypto.scrypt(inputToken, salt, 64, (error, derivedKey) => {
+    
+                if (error) {
+                    resolve(false);
+                } else {
+                    resolve(key === derivedKey.toString('hex'));
+                }
+            });
+    
         });
+    };
 
-    });
-
+    for (const hash of hashes) {
+        const ret = await check(hash);
+        if (ret) {
+            return true;
+        }
+    }
+    return false;
 };
 
 const generateTurnCredentials = name => {
