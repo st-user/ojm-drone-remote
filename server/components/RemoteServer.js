@@ -2,7 +2,8 @@ const {
     MAX_REMOTE_CLIENT_COUNT,
     MAX_REMOTE_CLIENT_HTTP_BUF_SIZE,
     REMOTE_CLIENT_TIMEOUT_MILLIS,
-    REMOTE_CLIENT_PING_INTERVAL
+    REMOTE_CLIENT_PING_INTERVAL,
+    REMOTE_CLIENT_SUSPEND_CLOSE_MILLIS
 } = require('./Environment.js');
 
 const logger = require('./Logger.js');
@@ -23,6 +24,7 @@ module.exports = class RemoteServer extends MessageHandlerServer {
             maxHttpBufferSize: MAX_REMOTE_CLIENT_HTTP_BUF_SIZE
         });
         this._startKeyRemoteClientMap = new Map();
+        this._disconnectionTimerMap = new Map();
 
         io.use((socket, next) => {
 
@@ -74,6 +76,14 @@ module.exports = class RemoteServer extends MessageHandlerServer {
             socket.emit('iceServerInfo', {
                 iceServerInfo
             });
+
+            const { peerConnectionId } = socket.data.clientInfo;
+            const existingTimer = this._disconnectionTimerMap.get(peerConnectionId);
+            clearTimeout(existingTimer);
+            this._disconnectionTimerMap.delete(peerConnectionId);
+            if (existingTimer) {
+                logger.info(`Recovers from disconnection ${peerConnectionId}`);
+            }
         });
     }
 
@@ -95,6 +105,23 @@ module.exports = class RemoteServer extends MessageHandlerServer {
             return;
         }
         socket.emit(messageType, data);
+    }
+
+    onDisconnectAndNotRecover(handler) {
+        this.on('disconnect', socket => {
+            const { peerConnectionId } = socket.data.clientInfo;
+
+            if (!this._disconnectionTimerMap.has(peerConnectionId)) {
+
+                logger.debug(`Suspend from closing ${peerConnectionId}`);
+                const disconnectionTimer = setTimeout(() => {
+                    logger.info(`Remote client hasn't recovered yet so tell the peer that it has been closed ${socket.id}`);
+                    handler.call(socket, socket);
+                }, REMOTE_CLIENT_SUSPEND_CLOSE_MILLIS);
+
+                this._disconnectionTimerMap.set(peerConnectionId, disconnectionTimer);
+            }
+        });          
     }
 
     isStartKeyUsed(startKey) {

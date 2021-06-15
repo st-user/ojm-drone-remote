@@ -97,16 +97,14 @@ localServer.on('message', (ws, dataJson) => {
 
 remoteServer.on(['offer', 'canOffer'], (socket, data) => {
 
-    logger.debug(data);
-
     const { startKey } = socket.data.clientInfo;
     localServer.send(startKey, data);
 });
 
-remoteServer.on('disconnect', socket => {
+remoteServer.onDisconnectAndNotRecover(socket => {
 
     const { startKey, peerConnectionId, isPrimary } = socket.data.clientInfo;
-
+   
     localServer.send(startKey, {
         messageType: 'close',
         peerConnectionId, isPrimary
