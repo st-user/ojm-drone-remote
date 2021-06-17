@@ -36,11 +36,11 @@ async function initApp() {
     }
 }
 
-function generateKey() {
+function generateStartKey() {
     return uuidv4();
 }
 
-app.get('/generateKey', async (req, res) => {
+async function checkAccessToken(req, res) {
 
     const bearerToken = req.headers['authorization'] || '';
     const [ bearerStr, inputToken ] = bearerToken.split(' ');
@@ -52,10 +52,29 @@ app.get('/generateKey', async (req, res) => {
         res.status(401);
         res.setHeader('WWW-Authenticate', 'Bearer realm=""');
         res.send('');
+        return false;
+    }
+    return true;
+}
+
+app.get('/validateAccessToken', async (req, res) => {
+
+    const isTokenValid = await checkAccessToken(req, res);
+    if (!isTokenValid) {
         return;
     }
 
-    const startKey = generateKey();
+    res.sendStatus(200);
+});
+
+app.get('/generateKey', async (req, res) => {
+
+    const isTokenValid = await checkAccessToken(req, res);
+    if (!isTokenValid) {
+        return;
+    }
+
+    const startKey = generateStartKey();
  
     localServer.setStartKey(startKey);
     remoteServer.setStartKeyIfAbsent(startKey);
