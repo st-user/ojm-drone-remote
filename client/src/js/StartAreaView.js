@@ -31,7 +31,8 @@ export default class StartAreaView {
                 return;
             }
             this.#viewStateModel.toReady();
-            this.#mainSectionModel.setUpConnection(this.#$startKey.value);
+            const startKeyTrimmed = !this.#$startKey.value ? '' : this.#$startKey.value.trim();
+            this.#mainSectionModel.setUpConnection(startKeyTrimmed);
         });
 
         DOM.click(this.#$toAudience, event => {
