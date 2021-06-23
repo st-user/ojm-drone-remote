@@ -1,6 +1,6 @@
 {
   "name": "ojm-tello-remote",
-  "version": "1.2.0",
+  "version": "1.0.0-BETA",
   "description": "ojm-drone-remote (server side)",
   "private": true,
   "scripts": {
@@ -9,16 +9,16 @@
   "author": "Tomoki Sato",
   "license": "MIT",
   "dependencies": {
-    "@google-cloud/firestore": "^4.12.2",
+    "@google-cloud/firestore": "^4.12.3",
     "dotenv": "^10.0.0",
     "express": "^4.17.1",
     "helmet": "^4.6.0",
     "log4js": "^6.3.0",
     "socket.io": "^4.1.2",
     "uuid": "^8.3.2",
-    "ws": "^7.4.6"
+    "ws": "^7.5.0"
   },
   "devDependencies": {
-    "eslint": "^7.28.0"
+    "eslint": "^7.29.0"
   }
 }
