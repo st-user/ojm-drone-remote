@@ -1,6 +1,8 @@
 const { PORT, NODE_ENV } = require('./components/Environment.js');
 
 const express = require('express');
+const helmet = require('helmet');
+
 const { v4: uuidv4 } = require('uuid');
 const { verify } = require('./components/token.js');
 const logger = require('./components/Logger.js');
@@ -11,6 +13,7 @@ const storage = require('./components/Storage.js');
 
 const app = express();
 
+app.use(helmet());
 app.use(express.json());
 app.use('/', express.static('dist'));
 app.use('/audience', express.static('dist'));
