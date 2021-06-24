@@ -1,9 +1,9 @@
 const environment = require('./Environment.js');
-const SECRET = environment.isDevelopment ? undefined : environment.TURN_SECRET;
+const SECRETS = environment.isDevelopment ? undefined : environment.TURN_SECRETS;
 const {
     HOURS_TURN_CREDENTIAL_VALID,
-    STUN_URL,
-    TURN_URL
+    STUN_URLS,
+    TURN_URLS
 } = environment;
 
 const crypto = require('crypto');
@@ -71,35 +71,54 @@ const verify = async (inputToken, hashes) => {
     return false;
 };
 
-const generateTurnCredentials = name => {
+const generateTurnCredentials = (secret, name) => {
 
-    if (!SECRET || !HOURS_TURN_CREDENTIAL_VALID) {
+    if (!secret || !HOURS_TURN_CREDENTIAL_VALID) {
         return undefined;
     }
 
     const timestamp = parseInt(Date.now() / 1000) + HOURS_TURN_CREDENTIAL_VALID * 3600;
     const username = `${timestamp}:${name}`;
 
-    const hmac = crypto.createHmac('sha1', SECRET);
+    const hmac = crypto.createHmac('sha1', secret);
     hmac.setEncoding('base64');
     hmac.write(username);
     hmac.end();
 
-    const password = hmac.read();
+    const credential = hmac.read();
 
     return {
         username: username,
-        password: password
+        credential: credential
     };
 };
 
 const generateICEServerInfo = () => {
-    const credentials = generateTurnCredentials(crypto.randomBytes(8).toString('hex'));
-    const iceServerInfo = !credentials ? undefined : {
-        stun: STUN_URL,
-        turn: TURN_URL,
-        credentials
-    };
+
+    if (!SECRETS) {
+        return undefined;
+    }
+
+    const secrets = SECRETS.split(',');
+    const stuns = STUN_URLS.split(',');
+    const turns = TURN_URLS.split(',');
+    const iceServers = [];
+
+    secrets.forEach((sec, index) => {
+        const stun = stuns[index];
+        const turn = turns[index];
+        const { username, credential } = generateTurnCredentials(sec, crypto.randomBytes(8).toString('hex'));
+
+        iceServers.push({
+            urls: [stun]
+        });
+        iceServers.push({
+            urls: [turn],
+            username, credential
+        });
+    });  
+
+    const iceServerInfo = { iceServers };
 
     return iceServerInfo;
 };

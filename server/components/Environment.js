@@ -13,10 +13,10 @@ module.exports = {
     NODE_ENV: process.env.NODE_ENV,
     LOG_LEVEL: process.env.LOG_LEVEL || 'info',
 
-    TURN_SECRET: process.env.TURN_SECRET,
+    TURN_SECRETS: process.env.TURN_SECRETS,
     HOURS_TURN_CREDENTIAL_VALID: process.env.HOURS_TURN_CREDENTIAL_VALID,
-    STUN_URL: process.env.STUN_URL,
-    TURN_URL: process.env.TURN_URL,
+    STUN_URLS: process.env.STUN_URLS,
+    TURN_URLS: process.env.TURN_URLS,
 
     MAX_LOCAL_CLIENT_COUNT: _parseIntOrDefault(process.env.MAX_REMOTE_CLIENT_COUNT, 1000),
     MAX_LOCAL_CLIENT_HTTP_BUF_SIZE: _parseIntOrDefault(process.env.MAX_HTTP_BUF_SIZE, 1024 * 1024),

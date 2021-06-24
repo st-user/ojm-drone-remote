@@ -254,16 +254,7 @@ export default class RTCHandler {
             sdpSemantics: 'unified-plan'
         };
         if (this.#iceServerInfo) {
-            config.iceServers = [
-                {
-                    urls: this.#iceServerInfo.stun
-                },
-                {
-                    urls: this.#iceServerInfo.turn,
-                    username: this.#iceServerInfo.credentials.username,
-                    credential: this.#iceServerInfo.credentials.password
-                }
-            ];
+            config.iceServers = this.#iceServerInfo.iceServers;
         }
             
         const pc = new RTCPeerConnection(config);
