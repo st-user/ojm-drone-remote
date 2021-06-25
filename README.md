@@ -45,6 +45,18 @@ For more infromation, please see the documentations on each variable in `.env` f
 
 If you want to just work through the 'How to use' below, you don't have to change them.
 
+**NOTE**:
+
+You have to clone all the projects to the same directory. For example:
+
+```
+projects
+ |- ojm-drone-client-js-lib
+ |- ojm-drone-remote
+ |- ojm-drone-local
+```
+
+
 ## ojm-drone-remote
 
 ### macOS
@@ -136,11 +148,16 @@ You should see a web page like:
 
 ### macOS/Windows 10
 
-For simplicity, **remove** the line below in `server/go.mod` file.
+For simplicity, **remove** the lines below in `server/go.mod` file.
+
+```
+gobot.io/x/gobot v0.0.0-00010101000000-000000000000
+```
 
 ```
 replace gobot.io/x/gobot => ../../gobot
 ```
+
 (When you remove the line, 'ojm-drone-local' can't successfully resume the connection to Tello. So now I'm using the slightly modified version of [gobot](https://github.com/hybridgroup/gobot/) [Tello](https://github.com/hybridgroup/gobot/tree/release/platforms/dji/tello) module. (https://github.com/hybridgroup/gobot/issues/793))
 
 
@@ -185,32 +202,9 @@ You should see a web page like:
 
 ## Use the applications
 
+ TBD
 
-1. At the 'ojm-drone-local' web page, click 'Generate' button.
-2. At the 'ojm-drone-local' web page, click 'START' button.
-3. At the 'ojm-drone-local' web page, copy the generated code ('Start Code').
-4. At the 'ojm-drone-remote' web page, paste the 'Start Code' into the text box.
-5. At the 'ojm-drone-remote' web page, click 'START' button.
-
-   When the WebRTC connection between 'ojm-drone-remote' and 'ojm-drone-local' is successfully established, at the 'ojm-drone-remote' web page you can see the result like:
-
-   ![ojm-drone-remote-result](./README-images/ojm-drone-remote_2.png)
-
-   **NOTE**:
-   
-   You should see the video that Tello caputures by its webcam.
-
-
-
-6. At the 'ojm-drone-local' web page, click 'Takeoff' button.
-
-   Tello takes off and at the 'ojm-drone-remote' web page, you can control Tello with the UI like a joy sticks!
-
-
-**NOTE**:
-
-If you don't get any error but can't see the video, please check your PC's firewall settings. It could be preventing the WebRTC connection.
-
+ (For your information, the manual for users is [here](https://github.com/st-user/ojm-drone-doc)).
 
 # Using Docker
 
