@@ -14,6 +14,14 @@ const storage = require('./components/Storage.js');
 const app = express();
 
 app.use(helmet());
+app.use(
+    helmet.contentSecurityPolicy({
+        directives: {
+            ...helmet.contentSecurityPolicy.getDefaultDirectives(),
+            'connect-src': ['\'self\' wss:']
+        },
+    })
+);
 app.use(express.json());
 app.use('/', express.static('dist'));
 app.use('/audience', express.static('dist'));
