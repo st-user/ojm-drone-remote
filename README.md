@@ -81,6 +81,8 @@ npm install
 git clone https://github.com/st-user/ojm-drone-local.git
 cd ojm-drone-local
 cp template.env .env
+cd client
+npm install
 ```
 
 ### Windows 10
@@ -89,6 +91,8 @@ cp template.env .env
 git clone https://github.com/st-user/ojm-drone-local.git
 cd ojm-drone-local
 copy template.env .env
+cd client
+npm install
 ```
 
 # How to use
@@ -145,18 +149,27 @@ Open the terminal different from the one that you run `node app.js` above, move 
 #### macOS
 
 ```
+cd client
+npm run build-css
+npm run build:test
+cd ../
 cd server
 go mod tidy
-env GO_ENV_FILE_PATH=../.env GO_STATIC_FILE_DIR=../client/static go run .
+env GO_ENV_FILE_PATH=../.env GO_STATIC_FILE_DIR=../client/dist LOG_BASE_DIR=../ go run .
 ```
 
 #### Windows 10
 
 ```
+cd client
+npm run build-css
+npm run build:test
+cd ../
 cd server
 go mod tidy
 set GO_ENV_FILE_PATH=..\.env
-set GO_STATIC_FILE_DIR=..\client\static
+set GO_STATIC_FILE_DIR=..\client\dist
+set LOG_BASE_DIR=..\
 go run .
 ```
 
