@@ -3,7 +3,6 @@ const Firestore = require('@google-cloud/firestore');
 const TAGET_COLLECTIONS = [
     'events',
     'rooms',
-    'startKeys',
     'sessionKeys',
     'local_events',
     'local_rooms',
@@ -17,8 +16,7 @@ const TAGET_COLLECTIONS = [
 const MINUTS_EXPIRES_IN = {
     'events': 1,
     'local_events': 1,
-    'remote_events': 1,
-    'startKeys': 15
+    'remote_events': 1
 };
 
 exports.cleanup = async (event, context) => {

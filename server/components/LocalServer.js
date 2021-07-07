@@ -80,7 +80,6 @@ module.exports = class LocalServer extends MessageHandlerServer {
         });
 
         this._startKeyLocalClientMap = new Map();
-        this._tickets = new Map();
 
         httpServer.on('upgrade', async (request, socket, head) => {
 
@@ -199,11 +198,8 @@ module.exports = class LocalServer extends MessageHandlerServer {
             startKey
         );
 
-        await localEventManager.trigger({
-            eventName: 'message',
-            detail: {
-                roomId: startKey
-            }
+        await localEventManager.trigger('message', {
+            roomId: startKey
         });
     }
 
@@ -217,6 +213,22 @@ module.exports = class LocalServer extends MessageHandlerServer {
 
     async _deleteTicket(ticket) {
         await localMessageSender.deleteTicket(ticket);
+    }
+
+    getKeysOnOpenedSocket() {
+        let ret = [];
+        for (const socket of this._startKeyLocalClientMap.values()) {
+            if (socket.readyState === WebSocket.CONNECTING || socket.readyState === WebSocket.OPEN) {
+
+                const startKey = socket.__startKey;
+                const sessionKey = socket.__sessionKey;
+
+                ret.push({
+                    startKey, sessionKey
+                });
+            }
+        }   
+        return ret;
     }
 
     _doWithLocalClient(startKey, handler) {

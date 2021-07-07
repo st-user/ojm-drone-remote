@@ -9,6 +9,7 @@ const logger = require('./components/Logger.js');
 const RemoteServer = require('./components/RemoteServer.js');
 const LocalServer = require('./components/LocalServer.js');
 const { storage } = require('./components/Storage.js');
+const UsageChecker = require('./components/UsageChecker.js');
 
 const app = express();
 
@@ -25,24 +26,15 @@ app.use(express.json());
 app.use('/', express.static('dist'));
 app.use('/audience', express.static('dist'));
 
-const httpServer = app.listen(PORT, async () => {
-    await initApp();
+const httpServer = app.listen(PORT, () => {
     logger.info(`Listening on ${PORT}`);
 });
 
 const localServer = new LocalServer(httpServer);
 const remoteServer = new RemoteServer(app);
+new UsageChecker(localServer);
 
 logger.info(`Environment: ${NODE_ENV}`);
-
-async function initApp() {
-    const startKeys = await storage.getStartKeys();
-    logger.info(`Restores ${startKeys.length} startKey(s)`);
-    for (const { startKey } of startKeys) {
-        localServer.setStartKey(startKey);
-        remoteServer.setStartKeyIfAbsent(startKey);
-    }
-}
 
 function generateStartKey() {
     return uuidv4();

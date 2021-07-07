@@ -128,12 +128,9 @@ module.exports = class RemoteServer extends MessageHandlerServer {
             startKey
         );
 
-        await remoteEventManager.trigger({
-            eventName: 'message',
-            detail: {
-                roomId: startKey,
-                peerConnectionId,
-            }
+        await remoteEventManager.trigger('message', {
+            roomId: startKey,
+            peerConnectionId,
         });
     }
 };

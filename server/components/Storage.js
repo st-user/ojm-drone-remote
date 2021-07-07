@@ -70,39 +70,6 @@ if (!STORAGE_PROJEDT_ID && isDevelopment) {
             return ret;
         }
 
-        async getStartKeys() {
-            const snapshot = await this._db.collection('startKeys').get();
-            const ret = [];
-            snapshot.forEach(doc => {
-                ret.push({
-                    startKey: doc.id,
-                    timestamp: doc.data().timestamp
-                });
-            });
-
-            return ret;
-        }
-    
-        async updateStartKey(startKey, timestamp) {
-
-            const collectionRef = this._db.collection('startKeys');
-            await this._db.runTransaction(async t => {
-
-                const docRef = await collectionRef.doc(startKey);
-                const doc = await t.get(docRef);
-                    
-                if (!doc.data()) {
-                    docRef.set({ timestamp });   
-                } else {
-                    t.update(docRef, { timestamp });
-                }
-    
-            });
-        }
-
-        async deleteStartKey(startKey) {
-            return await this._db.collection('startKeys').doc(startKey).delete();
-        }
     }
 
     class EventManager {
@@ -138,9 +105,13 @@ if (!STORAGE_PROJEDT_ID && isDevelopment) {
             });
         }
     
-        async trigger(eventData) {
+        async trigger(eventName, detail) {
             const docId = uuidv4();
-            await this._db.collection(this._eventCollectionName).doc(docId).set(eventData);
+            await this._db.collection(this._eventCollectionName).doc(docId).set({
+                timestamp: Date.now(),
+                eventName,
+                detail
+            });
         }
     
         on(eventName, handler) {
@@ -227,9 +198,16 @@ if (!STORAGE_PROJEDT_ID && isDevelopment) {
             if (!data || !data.timestamp) {
                 return undefined;
             }
+            await this.updateSessionKeyTimestamp(sessionKey);
             return data.detail;
         }
-    
+
+        async updateSessionKeyTimestamp(sessionKey) {
+            await this._db.collection(this._sessionKeyCollectionName).doc(sessionKey).update({
+                timestamp: Date.now()
+            });
+        }
+
         async _getSessionKeyData(sessionKey) {
             const sessRef = this._db.collection(this._sessionKeyCollectionName).doc(sessionKey);
             const doc = await sessRef.get();
@@ -278,7 +256,13 @@ if (!STORAGE_PROJEDT_ID && isDevelopment) {
             }
             return true;
         }
-    
+
+        async updateRoomTimestamp(roomId) {
+            await this._db.collection(this._roomCollectionName).doc(roomId).update({
+                timestamp: Date.now()
+            });
+        }
+
         async sendMessage(message, roomId) {
     
             const sessionKeys = [];
