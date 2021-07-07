@@ -7,11 +7,12 @@ const {
 } = require('./Environment.js');
 
 const WebSocket = require('ws');
-const crypto = require('crypto');
+const { v4: uuidv4 } = require('uuid');
 
 const logger = require('./Logger.js');
 const MessageHandlerServer = require('./MessageHandlerServer.js');
 const { generateICEServerInfo } = require('./token.js');
+const { localEventManager, localMessageSender } = require('./Storage.js');
 
 
 class RemoteConnectionManager {
@@ -81,7 +82,7 @@ module.exports = class LocalServer extends MessageHandlerServer {
         this._startKeyLocalClientMap = new Map();
         this._tickets = new Map();
 
-        httpServer.on('upgrade', (request, socket, head) => {
+        httpServer.on('upgrade', async (request, socket, head) => {
 
             const url = new URL( request.url, 'http://localhost');
             const pathname = url.pathname;
@@ -97,10 +98,10 @@ module.exports = class LocalServer extends MessageHandlerServer {
                 }
 
                 const ticket = url.searchParams.get('ticket');
-                const startKey = this._tickets.get(ticket);
-                this._tickets.delete(ticket);
+                const startKey = await this._getStartKey(ticket);
+                await this._deleteTicket(ticket);
 
-                if(!this._startKeyLocalClientMap.has(startKey)) {
+                if(!startKey || !await this._hasStartKey(startKey)) {
                     const _startKey = !startKey ? '' : startKey;
                     logger.warn(`Invalid startKey: ${_startKey.slice(0, 5)}...`);
                     socket.write('HTTP/1.1 401 Unauthorized\r\n\r\n');
@@ -115,10 +116,13 @@ module.exports = class LocalServer extends MessageHandlerServer {
         
         });
 
-        server.on('connection', (ws, _request, startKey) => {
+        server.on('connection', async (ws, _request, startKey) => {
               
             this._startKeyLocalClientMap.set(startKey, ws);
+            const sessionKey = uuidv4();
+            await localMessageSender.setSessionKey(sessionKey, startKey);
             ws.__startKey = startKey;
+            ws.__sessionKey = sessionKey;
         
             const remoteConnectionManager = new RemoteConnectionManager(ws);
 
@@ -149,52 +153,70 @@ module.exports = class LocalServer extends MessageHandlerServer {
                 iceServerInfo
             }));
         });
+
+        localEventManager.on('message', ({ detail }) => {
+
+            logger.debug(`message_for_${detail.roomId}`);
+        
+            const startKey = detail.roomId;
+            this._doWithLocalClient(startKey, localClient => {
+                const sessionKey = localClient.__sessionKey;
+        
+                localMessageSender.checkAllData(sessionKey).then(messages => {
+                    messages.forEach(message => {
+                        localClient.send(JSON.stringify(message));
+                    });
+        
+                });
+            });
+        });
     }
 
-    setStartKey(startKey) {
-        this._startKeyLocalClientMap.set(startKey, {});
+    async setStartKey(startKey) {
+        await localMessageSender.setRoom(startKey);
     }
 
-    generateTicket(startKey) {
+    async generateTicket(startKey) {
 
-        if (!this._startKeyLocalClientMap.has(startKey)) {
+        if (!this._hasStartKey(startKey)) {
             return undefined;
         }
 
-        const ticket = crypto.randomBytes(8).toString('hex');
-        this._tickets.set(ticket, startKey);
-        setTimeout(() => {
-            if (this._tickets.has(ticket)) {
-                this._tickets.delete(ticket);
-                logger.warn(`A ticket for startKey has expired ${ticket.slice(0, 3)}...`);
-            } 
+        const ticket = uuidv4();
+        await localMessageSender.setTicketForRoom(ticket, startKey);
+        setTimeout(async () => {
+            await this._deleteTicket(ticket);
+            logger.warn(`A ticket for startKey has expired ${ticket.slice(0, 3)}...`);
         }, TICKET_EXPIRES_IN);
 
         return ticket;
     }
 
-    send(startKey, data) {
-        this._doWithLocalClient(startKey, localClient => {
-            localClient.send(JSON.stringify(data));
-        });        
+    async send(startKey, data) {
+
+        await localMessageSender.sendMessage(
+            data,
+            startKey
+        );
+
+        await localEventManager.trigger({
+            eventName: 'message',
+            detail: {
+                roomId: startKey
+            }
+        });
     }
 
-
-    isStartKeyUsed(startKey) {
-        const localClient = this._startKeyLocalClientMap.get(startKey);
-        return localClient && localClient.readyState === WebSocket.OPEN;
+    async _getStartKey(ticket) {
+        return localMessageSender.getRoomIdFromTicket(ticket);
     }
 
-    remove(startKey) {
-        const localClient = this._startKeyLocalClientMap.get(startKey);
-        if (!localClient || !localClient.close) {
-            return;
-        }
-        try {
-            localClient.close();
-        } catch(e) {
-            logger.error(e);
-        }
+    async _hasStartKey(startKey) {
+        return localMessageSender.hasRoom(startKey);
+    }
+
+    async _deleteTicket(ticket) {
+        await localMessageSender.deleteTicket(ticket);
     }
 
     _doWithLocalClient(startKey, handler) {

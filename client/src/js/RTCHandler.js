@@ -6,7 +6,7 @@ import { CustomEventNames } from './CustomEventNames.js';
 import SocketHandler from './SocketHandler.js';
 import Logger from './Logger.js';
 
-const TRY_CONNECTING_COUNT = 3;
+const TRY_CONNECTING_COUNT = 10;
 const TRY_PRIMARY_COUNT = 10;
 const TRY_INTERVAL_MILLIS = 1000;
 const SEND_COORD_INTERVAL_MILLIS = 100;
@@ -79,20 +79,16 @@ export default class RTCHandler {
             isPrimary: this.#startAreaModel.isPrimary()
         });
 
-        this.#socketHandler.on('iceServerInfo', data => {
-            this.#iceServerInfo = data.iceServerInfo;
-        });
+        this.#socketHandler.on('canOffer', async event => {
+            const data = event.detail;
 
-        this.#socketHandler.on('canOffer', async data => {
             switch(data.state) {
             case 'EMPTY':
                 this.#blockedByAnotherPrimaryPeerCount = 0;
-                this.#closeRTCConnectionQuietly();
                 await this.startCreatingConnection();
                 break;
             case 'SAME':
                 this.#blockedByAnotherPrimaryPeerCount = 0;
-                this.#closeRTCConnectionQuietly();
                 Logger.warn('Can not offer.');
                 break;
             case 'EXIST':
@@ -108,7 +104,9 @@ export default class RTCHandler {
             }
         });
 
-        this.#socketHandler.on('answer', data => {
+        this.#socketHandler.on('answer', event => {
+            const data = event.detail;
+
             Logger.debug('answer', data.answer);
             if (data.err) {
                 this.#closeRTCConnectionQuietly();
@@ -128,7 +126,10 @@ export default class RTCHandler {
             this.#viewStateModel.toInit();
         });
 
-        this.#socketHandler.on('connect', () => {
+        this.#socketHandler.on('connect', event => {
+            const data = event.detail;
+            this.#iceServerInfo = data.iceServerInfo;
+
             Logger.debug('open.');
 
             this.#retryCountOnSocDisconnect = 0;
@@ -137,7 +138,7 @@ export default class RTCHandler {
         });
 
         const disconnectMsg = 'Failed to open connection or connection was closed. Please retry.';
-        const retry = () => {
+        const retry = async () => {
 
             Logger.info(`trying to recover websocket connection ${this.#retryCountOnSocDisconnect}/${MAx_RETRY_COUNT_ON_SOC_DISCONNECT}.`);
             if (MAx_RETRY_COUNT_ON_SOC_DISCONNECT < this.#retryCountOnSocDisconnect) {
@@ -146,13 +147,15 @@ export default class RTCHandler {
                 return;
             }
             this.#retryCountOnSocDisconnect++;
-            this.#socketHandler.connect();
-
             this.#retryTimerOnSocDisconnect = setTimeout(retry, RETRY_INTERVAL_MILLIS_ON_SOC_DISCONNECT);
+
+            await this.#socketHandler.connect();
         };
 
-        this.#socketHandler.on('disconnect', reason => {
-            if (reason !== 'io client disconnect') {
+        this.#socketHandler.on('disconnect', async event => {
+            const reason = event.detail;
+
+            if (reason !== 'client disconnect') {
                 retry();
                 return;
             }
@@ -162,6 +165,8 @@ export default class RTCHandler {
             }
             this.#viewStateModel.toInit();
         });
+
+        this.#socketHandler.connect();
     }
 
     async checkAndTry() {
@@ -173,13 +178,13 @@ export default class RTCHandler {
         };
 
         if (this.#viewStateModel.isInit() || !this.#pc) {
-            this.#checkIfCanOffer();
+            await this.checkIfCanOffer();
             _checkAndTry();
             return;
         }
         const tryToConnect = async () => {
             Logger.info(`try to connect ${this.#pc.connectionState} - ${!this.#dc ? '' : this.#dc.readyState}.`);
-            this.#checkIfCanOffer();
+            await this.checkIfCanOffer();
         };
     
         const isNewOrConnectiong = this.#pc.connectionState === 'new' || this.#pc.connectionState === 'connecting';
@@ -229,12 +234,12 @@ export default class RTCHandler {
         _checkAndTry();
     }
 
-    #checkIfCanOffer() {
+    async checkIfCanOffer() {
         if (!this.#socketHandler) {
             return;
         }
 
-        this.#socketHandler.send('canOffer', {
+        await this.#socketHandler.send('canOffer', {
             messageType: 'canOffer',
             peerConnectionId: this.#peerConnectionId,
             isPrimary: this.#startAreaModel.isPrimary()
@@ -356,7 +361,7 @@ export default class RTCHandler {
         await gather();
         const offerLocalDesc = pc.localDescription;
     
-        this.#socketHandler.send('offer', {
+        await this.#socketHandler.send('offer', {
             messageType: 'offer',
             peerConnectionId: this.#peerConnectionId,
             offer: {
@@ -396,7 +401,7 @@ export default class RTCHandler {
             });
             
             this.#pc.close();
-        }   
+        }
     }
 
     #showMessage(message) {

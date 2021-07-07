@@ -8,8 +8,7 @@ const { verify } = require('./components/token.js');
 const logger = require('./components/Logger.js');
 const RemoteServer = require('./components/RemoteServer.js');
 const LocalServer = require('./components/LocalServer.js');
-const StartKeySweeper = require('./components/StartKeySweeper.js');
-const storage = require('./components/Storage.js');
+const { storage } = require('./components/Storage.js');
 
 const app = express();
 
@@ -32,18 +31,16 @@ const httpServer = app.listen(PORT, async () => {
 });
 
 const localServer = new LocalServer(httpServer);
-const remoteServer = new RemoteServer(httpServer);
-const startKeySweeper = new StartKeySweeper(localServer, remoteServer);
+const remoteServer = new RemoteServer(app);
 
 logger.info(`Environment: ${NODE_ENV}`);
 
 async function initApp() {
     const startKeys = await storage.getStartKeys();
     logger.info(`Restores ${startKeys.length} startKey(s)`);
-    for (const { startKey, timestamp } of startKeys) {
+    for (const { startKey } of startKeys) {
         localServer.setStartKey(startKey);
         remoteServer.setStartKeyIfAbsent(startKey);
-        await startKeySweeper.setStartKeyWithTimestamp(startKey, timestamp);
     }
 }
 
@@ -87,18 +84,17 @@ app.get('/generateKey', async (req, res) => {
 
     const startKey = generateStartKey();
  
-    localServer.setStartKey(startKey);
-    remoteServer.setStartKeyIfAbsent(startKey);
-    startKeySweeper.setStartKey(startKey);
+    await localServer.setStartKey(startKey);
+    await remoteServer.setStartKeyIfAbsent(startKey);
 
     res.json({ startKey });
 });
 
-app.post('/ticket', (req, res) => {
+app.post('/ticket', async (req, res) => {
 
     const { startKey } = req.body;
 
-    const ticket = localServer.generateTicket(startKey);
+    const ticket = await localServer.generateTicket(startKey);
     if (!ticket) {
         const _startKey = !startKey ? '' : startKey;
         logger.warn(`Invalid startKey: ${_startKey.slice(0, 5)}...`);
@@ -125,19 +121,6 @@ localServer.on('message', (ws, dataJson) => {
 
 });
 
-remoteServer.on(['offer', 'canOffer'], (socket, data) => {
-
-    const { startKey } = socket.data.clientInfo;
+remoteServer.on(['offer', 'canOffer'], ({ startKey }, data) => {
     localServer.send(startKey, data);
-});
-
-remoteServer.onDisconnectAndNotRecover(socket => {
-
-    const { startKey, peerConnectionId, isPrimary } = socket.data.clientInfo;
-   
-    localServer.send(startKey, {
-        messageType: 'close',
-        peerConnectionId, isPrimary
-    });
-
 });
