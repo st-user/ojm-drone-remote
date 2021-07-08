@@ -8,6 +8,7 @@ export default class SocketHandler {
 
     #sessionKey;
     #isClosed;
+    #abortController;
 
     #$eventDiv;
 
@@ -25,6 +26,8 @@ export default class SocketHandler {
         let observeRetryTimer;
         this.#isClosed = true;
 
+        this.#abortController = new AbortController();
+        const { signal } = this.#abortController;
         const observe = async sessionKey => {
             if (this.#isClosed) {
                 Logger.warn('The connection has been closed.');
@@ -37,7 +40,8 @@ export default class SocketHandler {
                 },
                 body: JSON.stringify({
                     sessionKey
-                })
+                }),
+                signal
             }).then(res => {
                 if (res.ok) {
                     observeErrorCount = 0;
@@ -149,12 +153,10 @@ export default class SocketHandler {
     }
 
     close() {
-        this.#doDisconnect('client disconnect');
-    }
-
-    reset(query) {
-        this.#query = query;
-        this.#doDisconnect('client reset');
+        this.#isClosed = true;
+        if (this.#abortController) {
+            this.#abortController.abort();
+        }
     }
 
     #doDisconnect(reason) {

@@ -23,7 +23,6 @@ export default class RTCHandler {
     #dc;
     #iceServerInfo;
     #currentLocalDescription;
-    #isAnswerToTheOfferSet;
 
     #checkAndTryTimer;
 
@@ -58,11 +57,11 @@ export default class RTCHandler {
         }, TRY_INTERVAL_MILLIS);
     }
 
-    async setUpConnection(startKey) {
+    async setUpConnection() {
         
         await this.#startCreatingConnection();
 
-        this.#socketHandler = new SocketHandler('/remote', startKey, {
+        this.#socketHandler = new SocketHandler('/remote', this.#startAreaModel.getStartKey(), {
             peerConnectionId: this.#peerConnectionId,
             isPrimary: this.#startAreaModel.isPrimary()
         });
@@ -71,16 +70,10 @@ export default class RTCHandler {
             const data = event.detail;
 
             if (data.err) {
-                Logger.warn('Error on answer', data.answer);
-                this.#closeRTCConnectionQuietly();
+                Logger.warn('Error on answer');
             } else {
-                if (this.#isAnswerToTheOfferSet) {
-                    Logger.warn('Receives answer but the remote description has already been set.');
-                } else {
-                    Logger.info('Receives answer.');
-                    this.#isAnswerToTheOfferSet = true;
-                    this.#pc.setRemoteDescription(data.answer);
-                }
+                Logger.info('Receives answer.');
+                this.#pc.setRemoteDescription(data.answer);
             }
         });
 
@@ -146,22 +139,22 @@ export default class RTCHandler {
             }, TRY_INTERVAL_MILLIS);
         };
 
-        if (this.#viewStateModel.isInit() || !this.#pc) {
+        if (this.#viewStateModel.isInit() || !this.#pc || this.#pc.connectionState === 'new') {
             await this.#checkAndOffer();
             _checkAndTry();
             return;
         }
         const tryToConnect = async () => {
-            Logger.info(`try to connect ${this.#pc.connectionState} - ${!this.#dc ? '' : this.#dc.readyState}.`);
+            Logger.info(`try to connect ${this.#pc.connectionState} - ${!this.#dc ? '' : this.#dc.readyState} - ${this.#pc.signalingState}.`);
             await this.#checkAndOffer();
         };
 
-        const isPcConnected = this.#pc.connectionState === 'connected';
+        const isPcConnected = this.#pc.signalingState === 'stable';
 
         if (!isPcConnected) {
             await tryToConnect();
         } else {
-            Logger.info('Connection is valid. don\'t need to try.');
+            Logger.info('Connection is stable. don\'t need to try.');
         }
     
         _checkAndTry();
@@ -202,24 +195,17 @@ export default class RTCHandler {
         pc.addEventListener('connectionstatechange', async () => {
             
 
-            if (this.#isAnswerToTheOfferSet) {
+            switch (pc.connectionState) {
+            case 'disconnected':
+            case 'closed':
+                Logger.info(`ConnectionState changed to ${pc.connectionState} so retry offer later.`);
+                this.#socketHandler.close();
 
-                switch (pc.connectionState) {
-                case 'disconnected':
-                case 'closed':
-                    Logger.info(`ConnectionState changed to ${pc.connectionState} so retry offer later.`);
-                    setTimeout(async () => {
-                        await this.#startCreatingConnection();
+                setTimeout(async () => {
 
-                        this.#socketHandler.reset({
-                            peerConnectionId: this.#peerConnectionId,
-                            isPrimary: this.#startAreaModel.isPrimary()
-                        });
+                    await this.setUpConnection();
 
-                        await this.#socketHandler.connect();
-
-                    }, 1000);
-                }
+                }, 1000);
             }
         });
     
@@ -313,7 +299,6 @@ export default class RTCHandler {
         await gather();
         const offerLocalDesc = pc.localDescription;
 
-        this.#isAnswerToTheOfferSet = false;
         this.#currentLocalDescription = offerLocalDesc;
     }
 
