@@ -70,9 +70,9 @@ export default class RTCHandler {
             const data = event.detail;
 
             if (data.err) {
-                Logger.warn('Error on answer');
+                Logger.warn(`Error on answer to ${data.peerConnectionId}.`);
             } else {
-                Logger.info('Receives answer.');
+                Logger.info(`Receives answer to ${data.peerConnectionId}.`);
                 this.#pc.setRemoteDescription(data.answer);
             }
         });
@@ -145,7 +145,7 @@ export default class RTCHandler {
             return;
         }
         const tryToConnect = async () => {
-            Logger.info(`try to connect ${this.#pc.connectionState} - ${!this.#dc ? '' : this.#dc.readyState} - ${this.#pc.signalingState}.`);
+            Logger.info(`try to connect ${this.#peerConnectionId} : ${this.#pc.connectionState} - ${!this.#dc ? '' : this.#dc.readyState} - ${this.#pc.signalingState}.`);
             await this.#checkAndOffer();
         };
 
@@ -154,7 +154,7 @@ export default class RTCHandler {
         if (!isPcConnected) {
             await tryToConnect();
         } else {
-            Logger.info('Connection is stable. don\'t need to try.');
+            Logger.info(`Connection is stable. don't need to try. ${this.#peerConnectionId} : ${this.#pc.connectionState} - ${!this.#dc ? '' : this.#dc.readyState} - ${this.#pc.signalingState}`);
         }
     
         _checkAndTry();
@@ -192,22 +192,24 @@ export default class RTCHandler {
 
         Logger.debug(config);
         
-        pc.addEventListener('connectionstatechange', async () => {
-            
-
-            switch (pc.connectionState) {
+        const connectionStateChangeHandler = async () => {
+            switch (this.#pc.connectionState) {
             case 'disconnected':
             case 'closed':
-                Logger.info(`ConnectionState changed to ${pc.connectionState} so retry offer later.`);
+                Logger.info(`ConnectionState(${this.#peerConnectionId}) changed to ${this.#pc.connectionState}(${this.#pc.signalingState}) so retry offer later.`);
+                this.#currentLocalDescription = undefined;
                 this.#socketHandler.close();
-
+    
                 setTimeout(async () => {
-
+    
                     await this.setUpConnection();
-
+    
                 }, 1000);
+                pc.removeEventListener('connectionstatechange', connectionStateChangeHandler);
             }
-        });
+        };
+
+        pc.addEventListener('connectionstatechange', connectionStateChangeHandler);
     
         pc.addEventListener('icegatheringstatechange', () => {
             Logger.debug(`icegatheringstatechange: ${pc.iceGatheringState}`);
@@ -306,6 +308,7 @@ export default class RTCHandler {
 
         const offerLocalDesc = this.#currentLocalDescription;
 
+        Logger.info(`Send offer of ${this.#peerConnectionId}.`);
         await this.#socketHandler.send('offer', {
             messageType: 'offer',
             peerConnectionId: this.#peerConnectionId,
