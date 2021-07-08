@@ -181,11 +181,9 @@ if (!STORAGE_PROJEDT_ID && isDevelopment) {
             return Array.from(ret);
         }
     
-        async setSessionKey(sessionKey, roomId, data) {
+        async setSessionKey(sessionKey, roomId) {
+
             const detail = { roomId };
-            if (data) {
-                detail.data = data;
-            }
             
             await this._db.collection(this._sessionKeyCollectionName).doc(sessionKey).set({
                 timestamp: Date.now(),

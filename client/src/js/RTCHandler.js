@@ -194,6 +194,9 @@ export default class RTCHandler {
         
         const connectionStateChangeHandler = async () => {
             switch (this.#pc.connectionState) {
+            case 'failed':
+                Logger.warn(`ConnectionState(${this.#peerConnectionId}) changed to ${this.#pc.connectionState}(${this.#pc.signalingState}).`);
+                break;
             case 'disconnected':
             case 'closed':
                 Logger.info(`ConnectionState(${this.#peerConnectionId}) changed to ${this.#pc.connectionState}(${this.#pc.signalingState}) so retry offer later.`);

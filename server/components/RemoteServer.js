@@ -22,7 +22,7 @@ module.exports = class RemoteServer extends MessageHandlerServer {
 
         app.post('/remote/startObserving', async (req, res) => {
 
-            const { startKey, query } = req.body;
+            const { startKey } = req.body;
        
             if (!remoteMessageSender.hasRoom(startKey)) {
                 res.sendStatus(403);
@@ -31,7 +31,7 @@ module.exports = class RemoteServer extends MessageHandlerServer {
         
             const sessionKey = uuidv4();
             await remoteMessageSender.setSessionKey(
-                sessionKey, startKey, query,
+                sessionKey, startKey
             );        
 
             const iceServerInfo = generateICEServerInfo();
@@ -44,10 +44,10 @@ module.exports = class RemoteServer extends MessageHandlerServer {
 
         app.post('/remote/observe', async (req, res) => {
 
-            const { sessionKey } = req.body;
+            const { sessionKey, query } = req.body;
+            const { peerConnectionId } = query;
 
-            const { roomId, data } = await remoteMessageSender.checkSessionKey(sessionKey);
-            const { peerConnectionId } = data;
+            const { roomId } = await remoteMessageSender.checkSessionKey(sessionKey);
 
             if (!roomId) {
                 res.sendStatus(403);
@@ -89,8 +89,7 @@ module.exports = class RemoteServer extends MessageHandlerServer {
 
             const { sessionKey, eventName, message } = req.body;
         
-            const { roomId, data } = await remoteMessageSender.checkSessionKey(sessionKey);
-            const { peerConnectionId, isPrimary } = data;
+            const { roomId } = await remoteMessageSender.checkSessionKey(sessionKey);
 
             if (!roomId) {
                 res.sendStatus(403);
@@ -99,9 +98,7 @@ module.exports = class RemoteServer extends MessageHandlerServer {
         
             const handlers = this._messageHandlersMap.get(eventName);
             handlers.forEach(h => h.call({}, {
-                startKey: roomId,
-                peerConnectionId,
-                isPrimary
+                startKey: roomId
             }, message));
         
             res.end();

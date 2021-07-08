@@ -39,7 +39,8 @@ export default class SocketHandler {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    sessionKey
+                    sessionKey,
+                    query: this.#query
                 }),
                 signal
             }).then(res => {
@@ -91,8 +92,7 @@ export default class SocketHandler {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    startKey: this.#startKey,
-                    query: this.#query
+                    startKey: this.#startKey
                 })
             }).then(res => {
                 if (res.ok) {
