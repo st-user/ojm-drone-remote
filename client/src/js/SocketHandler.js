@@ -46,6 +46,9 @@ export default class SocketHandler {
                 }
                 throw res.statusText;
             }).then(async responseJson => {
+                if (this.#isClosed) {
+                    return;
+                }
                 
                 if (responseJson.forEach) {
                     responseJson.forEach(eventInfo => {
@@ -57,6 +60,9 @@ export default class SocketHandler {
                 await observe(sessionKey);
   
             }).catch(e => {
+                if (this.#isClosed) {
+                    return;
+                }
                 
                 Logger.warn('Failed to observe', e);
                 observeErrorCount++;
@@ -129,6 +135,10 @@ export default class SocketHandler {
             }
             throw res.statusText;
         }).catch(e => {
+            if (this.#isClosed) {
+                return;
+            }
+
             Logger.warn('Failed to send message', e);
             this.#doDisconnect('fails to send message'); 
         });
@@ -140,6 +150,11 @@ export default class SocketHandler {
 
     close() {
         this.#doDisconnect('client disconnect');
+    }
+
+    reset(query) {
+        this.#query = query;
+        this.#doDisconnect('client reset');
     }
 
     #doDisconnect(reason) {

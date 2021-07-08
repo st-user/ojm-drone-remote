@@ -13,9 +13,9 @@ export default class MainSectionModel {
         this.#rtcHandler.init();
     }
 
-    setUpConnection(startKey) {
+    async setUpConnection(startKey) {
         this.#rtcHandler.startChecking();
-        this.#rtcHandler.setUpConnection(startKey);
+        await this.#rtcHandler.setUpConnection(startKey);
     }
 
     setCoord(coord, shouldEndSending) {

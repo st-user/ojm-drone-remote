@@ -113,6 +113,6 @@ localServer.on('message', (ws, dataJson) => {
 
 });
 
-remoteServer.on(['offer', 'canOffer'], ({ startKey }, data) => {
+remoteServer.on(['offer'], ({ startKey }, data) => {
     localServer.send(startKey, data);
 });

@@ -6,8 +6,6 @@ import { CustomEventNames } from './CustomEventNames.js';
 import SocketHandler from './SocketHandler.js';
 import Logger from './Logger.js';
 
-const TRY_CONNECTING_COUNT = 10;
-const TRY_PRIMARY_COUNT = 10;
 const TRY_INTERVAL_MILLIS = 1000;
 const SEND_COORD_INTERVAL_MILLIS = 100;
 
@@ -24,10 +22,9 @@ export default class RTCHandler {
     #pc;
     #dc;
     #iceServerInfo;
+    #currentLocalDescription;
+    #isAnswerToTheOfferSet;
 
-    #newOrConnectingCount;
-    #dataChannelConnectingCount;
-    #blockedByAnotherPrimaryPeerCount;
     #checkAndTryTimer;
 
     #retryCountOnSocDisconnect;
@@ -40,13 +37,6 @@ export default class RTCHandler {
         this.#viewStateModel = viewStateModel;
         this.#startAreaModel = startAreaModel;
 
-        // TODO rename to peerId
-        this.#peerConnectionId = uuidv4();
-
-        this.#newOrConnectingCount = 0;
-        this.#dataChannelConnectingCount = 0;
-        this.#blockedByAnotherPrimaryPeerCount = 0;
-
         this.#retryCountOnSocDisconnect = 0;
 
         setTimeout(() => this.#doSendCoord(), SEND_COORD_INTERVAL_MILLIS);
@@ -54,10 +44,6 @@ export default class RTCHandler {
 
     init() {
         clearTimeout(this.#checkAndTryTimer);
-
-        this.#newOrConnectingCount = 0;
-        this.#dataChannelConnectingCount = 0;
-        this.#blockedByAnotherPrimaryPeerCount = 0;
 
         this.#retryCountOnSocDisconnect = 0;
         clearTimeout(this.#retryTimerOnSocDisconnect);
@@ -68,50 +54,33 @@ export default class RTCHandler {
     startChecking() {
         clearTimeout(this.#checkAndTryTimer);
         this.#checkAndTryTimer = setTimeout(async () => {
-            await this.checkAndTry();
+            await this.#checkAndTry();
         }, TRY_INTERVAL_MILLIS);
     }
 
-    setUpConnection(startKey) {
+    async setUpConnection(startKey) {
+        
+        await this.#startCreatingConnection();
 
         this.#socketHandler = new SocketHandler('/remote', startKey, {
             peerConnectionId: this.#peerConnectionId,
             isPrimary: this.#startAreaModel.isPrimary()
         });
 
-        this.#socketHandler.on('canOffer', async event => {
-            const data = event.detail;
-
-            switch(data.state) {
-            case 'EMPTY':
-                this.#blockedByAnotherPrimaryPeerCount = 0;
-                await this.startCreatingConnection();
-                break;
-            case 'SAME':
-                this.#blockedByAnotherPrimaryPeerCount = 0;
-                Logger.warn('Can not offer.');
-                break;
-            case 'EXIST':
-                this.#blockedByAnotherPrimaryPeerCount++;
-                if (TRY_PRIMARY_COUNT < this.#blockedByAnotherPrimaryPeerCount) {
-                    onerror = true;
-                    alert('Another peer is now controlling the drone. Please retry later or join as an audience.');
-                    this.#socketHandler.close();
-                }
-                break;
-            default:
-                Logger.warn('Unexpected state', data.state);
-            }
-        });
-
         this.#socketHandler.on('answer', event => {
             const data = event.detail;
 
-            Logger.debug('answer', data.answer);
             if (data.err) {
+                Logger.warn('Error on answer', data.answer);
                 this.#closeRTCConnectionQuietly();
             } else {
-                this.#pc.setRemoteDescription(data.answer);
+                if (this.#isAnswerToTheOfferSet) {
+                    Logger.warn('Receives answer but the remote description has already been set.');
+                } else {
+                    Logger.info('Receives answer.');
+                    this.#isAnswerToTheOfferSet = true;
+                    this.#pc.setRemoteDescription(data.answer);
+                }
             }
         });
 
@@ -166,95 +135,58 @@ export default class RTCHandler {
             this.#viewStateModel.toInit();
         });
 
-        this.#socketHandler.connect();
+        await this.#socketHandler.connect();
     }
 
-    async checkAndTry() {
+    async #checkAndTry() {
 
         const _checkAndTry = () => {
             this.#checkAndTryTimer = setTimeout(async () => {
-                await this.checkAndTry();
+                await this.#checkAndTry();
             }, TRY_INTERVAL_MILLIS);
         };
 
         if (this.#viewStateModel.isInit() || !this.#pc) {
-            await this.checkIfCanOffer();
+            await this.#checkAndOffer();
             _checkAndTry();
             return;
         }
         const tryToConnect = async () => {
             Logger.info(`try to connect ${this.#pc.connectionState} - ${!this.#dc ? '' : this.#dc.readyState}.`);
-            await this.checkIfCanOffer();
+            await this.#checkAndOffer();
         };
-    
-        const isNewOrConnectiong = this.#pc.connectionState === 'new' || this.#pc.connectionState === 'connecting';
-        if (isNewOrConnectiong) {
-            const tail = ' .'.repeat(this.#newOrConnectingCount + 1);
 
-            this.#showMessage(`Waiting for a while until the connection is established${tail}`);
+        const isPcConnected = this.#pc.connectionState === 'connected';
 
-            this.#newOrConnectingCount++;
-        } else {
-            this.#newOrConnectingCount = 0;
-        }
-        const isPeerConnectionStateNotValid = this.#pc.connectionState === 'disconnected' ||
-                                                  this.#pc.connectionState === 'failed' ||
-                                                  this.#pc.connectionState === 'closed';
-    
-            
-        let isDataChannelConnecting = false;
-        let isDataChannelStateNotValid = false;
-        if (this.#dc) {
-            isDataChannelConnecting = this.#dc.connectionState === 'connectiong';
-            if (isDataChannelConnecting) {
-                this.#dataChannelConnectingCount++;
-            } else {
-                this.#dataChannelConnectingCount = 0;
-            }
-        
-            isDataChannelStateNotValid = this.#dc.readyState === 'closing' || 
-                                                   this.#dc.readyState === 'closed';
-        }
-                                               
-        if (
-            (isNewOrConnectiong && TRY_CONNECTING_COUNT < this.#newOrConnectingCount) || 
-                isPeerConnectionStateNotValid || 
-                (isDataChannelConnecting && TRY_CONNECTING_COUNT < this.#dataChannelConnectingCount) ||
-                isDataChannelStateNotValid
-        ) {
-            this.#dataChannelConnectingCount = 0;
-            this.#newOrConnectingCount = 0;
-
-            this.#viewStateModel.toReady();
-
+        if (!isPcConnected) {
             await tryToConnect();
         } else {
-            Logger.info(`Connection is valid. don't need to try (${this.#newOrConnectingCount},${this.#dataChannelConnectingCount}).`);
+            Logger.info('Connection is valid. don\'t need to try.');
         }
+    
         _checkAndTry();
     }
 
-    async checkIfCanOffer() {
-        if (!this.#socketHandler) {
+    async #checkAndOffer() {
+        if (!this.#socketHandler || !this.#currentLocalDescription) {
             return;
         }
 
-        await this.#socketHandler.send('canOffer', {
-            messageType: 'canOffer',
-            peerConnectionId: this.#peerConnectionId,
-            isPrimary: this.#startAreaModel.isPrimary()
-        });
+        await this.#doOffer();
     }
 
-    async startCreatingConnection() {
+    async #startCreatingConnection() {
         this.#createPeerConnection();
         this.#prepareDataChannel();
-        await this.negotiate();
+        await this.#initLocalDescription();
     }
 
     #createPeerConnection() {
         Logger.debug(this.#iceServerInfo);
     
+        this.#peerConnectionId = uuidv4();
+        Logger.info(`peerConnectionId created ${this.#peerConnectionId}`);
+
         const config = {
             sdpSemantics: 'unified-plan'
         };
@@ -267,8 +199,28 @@ export default class RTCHandler {
 
         Logger.debug(config);
         
-        pc.addEventListener('connectionstatechange', () => {
-            Logger.debug(`connectionstatechange: ${pc.iceGatheringState}`);
+        pc.addEventListener('connectionstatechange', async () => {
+            
+
+            if (this.#isAnswerToTheOfferSet) {
+
+                switch (pc.connectionState) {
+                case 'disconnected':
+                case 'closed':
+                    Logger.info(`ConnectionState changed to ${pc.connectionState} so retry offer later.`);
+                    setTimeout(async () => {
+                        await this.#startCreatingConnection();
+
+                        this.#socketHandler.reset({
+                            peerConnectionId: this.#peerConnectionId,
+                            isPrimary: this.#startAreaModel.isPrimary()
+                        });
+
+                        await this.#socketHandler.connect();
+
+                    }, 1000);
+                }
+            }
         });
     
         pc.addEventListener('icegatheringstatechange', () => {
@@ -332,7 +284,7 @@ export default class RTCHandler {
         };
     }
 
-    async negotiate() {
+    async #initLocalDescription() {
         const gather = () => {
             return new Promise(resolve => {
                 const pc = this.#pc;
@@ -360,10 +312,19 @@ export default class RTCHandler {
         await pc.setLocalDescription(offer);
         await gather();
         const offerLocalDesc = pc.localDescription;
-    
+
+        this.#isAnswerToTheOfferSet = false;
+        this.#currentLocalDescription = offerLocalDesc;
+    }
+
+    async #doOffer() {
+
+        const offerLocalDesc = this.#currentLocalDescription;
+
         await this.#socketHandler.send('offer', {
             messageType: 'offer',
             peerConnectionId: this.#peerConnectionId,
+            isPrimary: this.#startAreaModel.isPrimary(),
             offer: {
                 sdp: offerLocalDesc.sdp,
                 type: offerLocalDesc.type,
@@ -402,12 +363,6 @@ export default class RTCHandler {
             
             this.#pc.close();
         }
-    }
-
-    #showMessage(message) {
-        CommonEventDispatcher.dispatch(CustomEventNames.OJM_DRONE_REMOTE__MESSAGE_ONLY, {
-            message
-        });
     }
 
     setCoordToSend(coord) {

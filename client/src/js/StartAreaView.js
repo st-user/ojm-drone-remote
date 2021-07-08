@@ -24,7 +24,7 @@ export default class StartAreaView {
 
     setUpEvent() {
 
-        DOM.click(this.#$start, event => {
+        DOM.click(this.#$start, async event => {
             event.preventDefault();
 
             if (!this.#viewStateModel.isInit()) {
@@ -32,7 +32,7 @@ export default class StartAreaView {
             }
             this.#viewStateModel.toReady();
             const startKeyTrimmed = !this.#$startKey.value ? '' : this.#$startKey.value.trim();
-            this.#mainSectionModel.setUpConnection(startKeyTrimmed);
+            await this.#mainSectionModel.setUpConnection(startKeyTrimmed);
         });
 
         DOM.click(this.#$toAudience, event => {
