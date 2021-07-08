@@ -12,6 +12,8 @@ const SEND_COORD_INTERVAL_MILLIS = 100;
 const MAx_RETRY_COUNT_ON_SOC_DISCONNECT = 10;
 const RETRY_INTERVAL_MILLIS_ON_SOC_DISCONNECT = 1000;
 
+const BROWSING_CONTEXT_ID = uuidv4();
+
 export default class RTCHandler {
 
     #viewStateModel;
@@ -70,7 +72,15 @@ export default class RTCHandler {
             const data = event.detail;
 
             if (data.err) {
-                Logger.warn(`Error on answer to ${data.peerConnectionId}.`);
+                if (data.state === 'OBSOLETE') {
+                    Logger.warn(`The browsing context id has been obsolete so the browser window needs to be reloaded. ${data.peerConnectionId}`);
+                    alert('Another peer requested to control the drone and has taken over the control. please reload the browser window and join as an audience.');
+                    this.#closeRTCConnectionQuietly();
+                    this.#socketHandler.close();
+                    this.#viewStateModel.toInit();
+                } else {
+                    Logger.warn(`Error on answer to ${data.peerConnectionId}.`);
+                }
             } else {
                 Logger.info(`Receives answer to ${data.peerConnectionId}.`);
                 this.#pc.setRemoteDescription(data.answer);
@@ -178,7 +188,7 @@ export default class RTCHandler {
         Logger.debug(this.#iceServerInfo);
     
         this.#peerConnectionId = uuidv4();
-        Logger.info(`peerConnectionId created ${this.#peerConnectionId}`);
+        Logger.info(`peerConnectionId created ${this.#peerConnectionId} on ${BROWSING_CONTEXT_ID}`);
 
         const config = {
             sdpSemantics: 'unified-plan'
@@ -316,6 +326,7 @@ export default class RTCHandler {
             messageType: 'offer',
             peerConnectionId: this.#peerConnectionId,
             isPrimary: this.#startAreaModel.isPrimary(),
+            browsingContextId: BROWSING_CONTEXT_ID,
             offer: {
                 sdp: offerLocalDesc.sdp,
                 type: offerLocalDesc.type,

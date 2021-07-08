@@ -56,7 +56,9 @@ module.exports = class RemoteServer extends MessageHandlerServer {
       
             const eventName = `message_for_${roomId}_${peerConnectionId}`;
             const handleData = async () => {
-                const existingData = await remoteMessageSender.checkAllData(sessionKey);
+                const existingData = await remoteMessageSender.checkAllData(sessionKey, message => {
+                    return message.data && message.data.peerConnectionId === peerConnectionId;
+                });
                 if (existingData && existingData.length > 0) {
                     res.send(existingData);
                     return true;

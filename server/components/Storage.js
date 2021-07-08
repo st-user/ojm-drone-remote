@@ -133,7 +133,7 @@ if (!STORAGE_PROJEDT_ID && isDevelopment) {
             this._db = firestoreDb;
         }
     
-        async checkAllData(sessionKey) {
+        async checkAllData(sessionKey, msgFilter) {
             
             let ret = new Set();
             const sessRef = this._db.collection(this._sessionKeyCollectionName).doc(sessionKey);
@@ -155,7 +155,9 @@ if (!STORAGE_PROJEDT_ID && isDevelopment) {
                 for (const msg of msgs) {
                     const { message } = msg;
                     if (msg[sessionKey]) {
-                        ret.add(message);
+                        if (!msgFilter || msgFilter(message)) {
+                            ret.add(message);
+                        }
                     }
                     delete msg[sessionKey];
                     msg.cnt--;
