@@ -193,14 +193,15 @@ module.exports = class LocalServer extends MessageHandlerServer {
 
     async send(startKey, data) {
 
-        await localMessageSender.sendMessage(
-            data,
-            startKey
-        );
+        localMessageSender.sendMessageSync(
+            data, 
+            startKey,
+            async () => {
+                await localEventManager.trigger('message', {
+                    roomId: startKey
+                });
+            });
 
-        await localEventManager.trigger('message', {
-            roomId: startKey
-        });
     }
 
     async _getStartKey(ticket) {
@@ -234,7 +235,7 @@ module.exports = class LocalServer extends MessageHandlerServer {
     _doWithLocalClient(startKey, handler) {
         const localClient = this._startKeyLocalClientMap.get(startKey);
 
-        if (!localClient || localClient.readyState !== WebSocket.OPEN) {
+        if (!localClient || localClient.readyState !== WebSocket.OPEN || !localClient.__sessionKey) {
             logger.warn(`Local client is not opened. ${startKey.slice(0, 5)}...`);
             return;
         }

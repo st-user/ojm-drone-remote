@@ -131,6 +131,8 @@ if (!STORAGE_PROJEDT_ID && isDevelopment) {
             this._roomCollectionName = `${context}_rooms`;
             this._ticketCollectionName = `${context}_tickets`;
             this._db = firestoreDb;
+            this._sendMessageTaskTimer = undefined;
+            this._messageQueue = [];
         }
     
         async checkAllData(sessionKey, msgFilter) {
@@ -301,7 +303,33 @@ if (!STORAGE_PROJEDT_ID && isDevelopment) {
     
             return roomId;
         }
+
+        sendMessageSync(message, roomId, triggerFunc) {
+            const task = {
+                message, roomId, triggerFunc
+            };
+            if (this._messageQueue.length > 30) {
+                this._messageQueue.length = 0;
+                logger.warn('Message queue size exceeds the limit so discards the old messages');
+                return;
+            }
+            this._messageQueue.push(task);
+            
+            if (!this._sendMessageTaskTimer) {
+                this._sendMessageTaskTimer = setTimeout(async () => {
+                    while (this._messageQueue.length > 0) {
+                        const tempMessage = this._messageQueue.shift();
+                        
+                        await this.sendMessage(tempMessage.message, tempMessage.roomId);
+                        await tempMessage.triggerFunc();
+                    }
+
+                    this._sendMessageTaskTimer = undefined;
+                }, 10);
+            }
+        }
     }
+
 
     module.exports = {
         storage: new Storage(firestoreDb),

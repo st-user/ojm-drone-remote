@@ -122,14 +122,14 @@ module.exports = class RemoteServer extends MessageHandlerServer {
     }
 
     async send(startKey, peerConnectionId, messageType, data) {
-        await remoteMessageSender.sendMessage(
-            { eventName: messageType, data },
-            startKey
-        );
-
-        await remoteEventManager.trigger('message', {
-            roomId: startKey,
-            peerConnectionId,
-        });
+        remoteMessageSender.sendMessageSync(
+            { eventName: messageType, data }, 
+            startKey,
+            async () => {
+                await remoteEventManager.trigger('message', {
+                    roomId: startKey,
+                    peerConnectionId,
+                });
+            });
     }
 };
